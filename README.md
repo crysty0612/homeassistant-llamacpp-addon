@@ -1,12 +1,14 @@
-<div align="center">
-  <img src="llamacpp/logo.png" width="100%" alt="llama.cpp Add-on Banner" style="border-radius: 12px; margin-bottom: 20px;">
-  <br>
-  <img src="llamacpp/icon.png" width="120" alt="llama.cpp Add-on Icon" style="border-radius: 20%; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-  <h1>Home Assistant llama.cpp Add-on</h1>
-</div>
+
+# Home Assistant llama.cpp Add-on
+
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/crysty0612/homeassistant-llamacpp-addon/test.yaml?label=Build%20Tests&style=for-the-badge)](https://github.com/crysty0612/homeassistant-llamacpp-addon/actions)
 [![HACS Custom Repository](https://img.shields.io/badge/HA_Addon-Ready-blue.svg?style=for-the-badge)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fcrysty0612%2Fhomeassistant-llamacpp-addon)
 
+<div align="center">
+  <img src="llamacpp/logo.png" width="100%" alt="llama.cpp Add-on Banner" style="border-radius: 12px;">
+</div>
+
+</div>
 Run large language models (LLMs) directly on your Home Assistant server using the highly optimized [llama.cpp](https://github.com/ggml-org/llama.cpp) inference engine. This Add-on wraps `llama-server`, exposing a highly configurable, memory-efficient, OpenAI-compatible API endpoint directly on your local network.
 
 ## ✨ Features
