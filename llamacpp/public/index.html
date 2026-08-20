@@ -161,47 +161,110 @@
                     badge.className = 'status-badge';
                 }
 
-                // Fetch Props
-                const propsRes = await fetch(`${basePath}/props`);
-                if (propsRes.ok) {
-                    const props = await propsRes.json();
-                    document.getElementById('model-path').textContent = props.model_path || 'Unknown';
-                    document.getElementById('ctx-size').textContent = props.default_generation_settings?.n_ctx || 'Unknown';
-                    document.getElementById('system-info').textContent = props.model_ftype || 'Unknown';
+                let isRouterMode = false;
+                let firstProps = null;
+
+                // Try fetching global props (Works in standard mode, fails with 400 in router mode)
+                const globalPropsRes = await fetch(`${basePath}/props`);
+                if (globalPropsRes.ok) {
+                    firstProps = await globalPropsRes.json();
+                } else if (globalPropsRes.status === 400) {
+                    isRouterMode = true;
                 }
 
-                // Fetch Slots
-                const slotsRes = await fetch(`${basePath}/slots`);
-                if (slotsRes.ok) {
-                    const slots = await slotsRes.json();
-                    const slotsList = document.getElementById('slots-list');
-                    if (slots && slots.length > 0) {
-                        slotsList.innerHTML = slots.map(s => {
-                            const isProcessing = s.is_processing === true;
-                            const promptTotal = s.n_prompt_tokens || 0;
-                            const promptDone = s.n_prompt_tokens_processed || 0;
-                            const nDecoded = (s.next_token && s.next_token[0]) ? s.next_token[0].n_decoded : 0;
-                            const nRemain = (s.next_token && s.next_token[0]) ? s.next_token[0].n_remain : 0;
-                            
-                            return `
-                            <div class="slot ${!isProcessing ? 'slot-idle' : 'slot-busy'}">
-                                <div><strong>Slot ${s.id}</strong> - ${!isProcessing ? 'Idle' : 'Processing'}</div>
-                                <div style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
-                                    ${isProcessing ? `Prefill: ${promptDone}/${promptTotal} | Decode: ${nDecoded} generated (${nRemain} remain)` : `Ready`}
-                                </div>
-                            </div>
-                            `;
-                        }).join('');
-                    } else {
-                        slotsList.innerHTML = `<p style="color: var(--text-muted)">No slots configured or active.</p>`;
+                const slotsList = document.getElementById('slots-list');
+                let totalSlotsHtml = '';
+
+                if (!isRouterMode) {
+                    // STANDARD MODE
+                    const slotsRes = await fetch(`${basePath}/slots`);
+                    if (slotsRes.ok) {
+                        const slots = await slotsRes.json();
+                        if (slots && slots.length > 0) {
+                            totalSlotsHtml = slots.map(s => renderSlot(s)).join('');
+                        }
+                    }
+                } else {
+                    // ROUTER MODE
+                    try {
+                        const modelsRes = await fetch(`${basePath}/v1/models`);
+                        if (modelsRes.ok) {
+                            const modelsData = await modelsRes.json();
+                            if (modelsData && modelsData.data) {
+                                for (const m of modelsData.data) {
+                                    const modelId = m.id;
+                                    const isLoaded = m.status && m.status.value === 'loaded';
+                                    
+                                    if (modelsData.data.length > 1) {
+                                        totalSlotsHtml += `<h3 style="font-size: 14px; margin: 10px 0 5px 0; color: var(--text-color);">Model: ${modelId}</h3>`;
+                                    }
+                                    
+                                    if (isLoaded) {
+                                        if (!firstProps) {
+                                            const pRes = await fetch(`${basePath}/props?model=${encodeURIComponent(modelId)}`);
+                                            if (pRes.ok) firstProps = await pRes.json();
+                                        }
+                                        const sRes = await fetch(`${basePath}/slots?model=${encodeURIComponent(modelId)}`);
+                                        if (sRes.ok) {
+                                            const slots = await sRes.json();
+                                            if (slots && slots.length > 0) {
+                                                totalSlotsHtml += slots.map(s => renderSlot(s)).join('');
+                                            }
+                                        }
+                                    } else {
+                                        totalSlotsHtml += `
+                                        <div class="slot slot-idle">
+                                            <div><strong>Status</strong> - Unloaded (Standby)</div>
+                                            <div style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+                                                Waiting for API request to load into memory...
+                                            </div>
+                                        </div>
+                                        `;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Router mode failed to fetch models:", e);
                     }
                 }
+
+                // Update UI
+                if (firstProps) {
+                    document.getElementById('model-path').textContent = firstProps.model_path || 'Unknown';
+                    document.getElementById('ctx-size').textContent = firstProps.default_generation_settings?.n_ctx || 'Unknown';
+                    document.getElementById('system-info').textContent = firstProps.model_ftype || 'Unknown';
+                }
+
+                if (totalSlotsHtml) {
+                    slotsList.innerHTML = totalSlotsHtml;
+                } else {
+                    slotsList.innerHTML = `<p style="color: var(--text-muted)">No slots configured or active.</p>`;
+                }
+                
             } catch (err) {
                 const badge = document.getElementById('health-badge');
                 badge.textContent = 'Offline';
                 badge.className = 'status-badge';
                 console.error("Fetch error: ", err);
             }
+        }
+
+        function renderSlot(s) {
+            const isProcessing = s.is_processing === true;
+            const promptTotal = s.n_prompt_tokens || 0;
+            const promptDone = s.n_prompt_tokens_processed || 0;
+            const nDecoded = (s.next_token && s.next_token[0]) ? s.next_token[0].n_decoded : 0;
+            const nRemain = (s.next_token && s.next_token[0]) ? s.next_token[0].n_remain : 0;
+            
+            return `
+            <div class="slot ${!isProcessing ? 'slot-idle' : 'slot-busy'}">
+                <div><strong>Slot ${s.id}</strong> - ${!isProcessing ? 'Idle' : 'Processing'}</div>
+                <div style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+                    ${isProcessing ? `Prefill: ${promptDone}/${promptTotal} | Decode: ${nDecoded} generated (${nRemain} remain)` : `Ready`}
+                </div>
+            </div>
+            `;
         }
 
         // Poll every 2 seconds

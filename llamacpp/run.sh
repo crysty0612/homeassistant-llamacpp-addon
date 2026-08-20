@@ -77,9 +77,6 @@ fi
 export LD_LIBRARY_PATH="$SERVER_DIR:$LD_LIBRARY_PATH"
 
 # Generate presets.ini
-PRESET_FILE="/tmp/presets.ini"
-rm -f "$PRESET_FILE"
-
 # Iterate over JSON array
 NUM_MODELS=$(jq '. | length' "$EXEC_CONFIG")
 if [ "$NUM_MODELS" -eq 0 ]; then
@@ -87,47 +84,89 @@ if [ "$NUM_MODELS" -eq 0 ]; then
     exit 1
 fi
 
-for i in $(seq 0 $((NUM_MODELS-1))); do
-    MODEL=$(jq --raw-output ".[$i].model // empty" "$EXEC_CONFIG")
-    MMPROJ=$(jq --raw-output ".[$i].mmproj // empty" "$EXEC_CONFIG")
-    DRAFTER=$(jq --raw-output ".[$i].drafter // empty" "$EXEC_CONFIG")
-    DRAFTER_TYPE=$(jq --raw-output ".[$i].drafter_type // empty" "$EXEC_CONFIG")
-    DISABLE_REASONING=$(jq --raw-output ".[$i].disable_reasoning // false" "$EXEC_CONFIG")
-    
-    # Extract filename from path for the preset section header
-    MODEL_NAME=$(basename "$MODEL" | sed 's/\.gguf$//')
-    
-    echo "[$MODEL_NAME]" >> "$PRESET_FILE"
-    echo "model = $MODEL" >> "$PRESET_FILE"
-    
-    if [ "$DISABLE_REASONING" = "true" ]; then
-        echo "reasoning = off" >> "$PRESET_FILE"
-    fi
-    
-    if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
-        echo "mmproj = $MMPROJ" >> "$PRESET_FILE"
-    fi
-    
-    HAS_EXTERNAL_DRAFTER="false"
-    if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
-        echo "model-draft = $DRAFTER" >> "$PRESET_FILE"
-        HAS_EXTERNAL_DRAFTER="true"
-    fi
-    
-    if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
-        echo "spec-type = draft-$DRAFTER_TYPE" >> "$PRESET_FILE"
-    fi
-    echo "" >> "$PRESET_FILE"
-done
-
-CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics" "--models-preset" "$PRESET_FILE")
+CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics")
 
 if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")
 fi
 
-echo "Generated presets.ini:"
-cat "$PRESET_FILE"
+if [ "$NUM_MODELS" -eq 1 ]; then
+    echo "Single model detected. Bypassing Router Mode for backwards compatibility."
+    MODEL=$(jq --raw-output ".[0].model // empty" "$EXEC_CONFIG")
+    MMPROJ=$(jq --raw-output ".[0].mmproj // empty" "$EXEC_CONFIG")
+    DRAFTER=$(jq --raw-output ".[0].drafter // empty" "$EXEC_CONFIG")
+    DRAFTER_TYPE=$(jq --raw-output ".[0].drafter_type // empty" "$EXEC_CONFIG")
+    DISABLE_REASONING=$(jq --raw-output ".[0].disable_reasoning // false" "$EXEC_CONFIG")
+    
+    CMD+=("-m" "$MODEL")
+    
+    if [ "$DISABLE_REASONING" = "true" ]; then
+        echo "Disabling reasoning"
+        CMD+=("--reasoning" "off")
+    fi
+    
+    if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
+        echo "Adding mmproj: $MMPROJ"
+        CMD+=("--mmproj" "$MMPROJ")
+    fi
+    
+    HAS_EXTERNAL_DRAFTER="false"
+    if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
+        echo "Adding Drafter Model: $DRAFTER"
+        CMD+=("-md" "$DRAFTER")
+        HAS_EXTERNAL_DRAFTER="true"
+    fi
+    
+    if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
+        if [ "$HAS_EXTERNAL_DRAFTER" = "true" ]; then
+            echo "Enabling External Speculative Decoding: $DRAFTER_TYPE"
+        else
+            echo "Enabling Self-Speculative Decoding: $DRAFTER_TYPE"
+        fi
+        CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
+    fi
+else
+    echo "Multiple models detected. Enabling Router Mode."
+    PRESET_FILE="/tmp/presets.ini"
+    rm -f "$PRESET_FILE"
+
+    for i in $(seq 0 $((NUM_MODELS-1))); do
+        MODEL=$(jq --raw-output ".[$i].model // empty" "$EXEC_CONFIG")
+        MMPROJ=$(jq --raw-output ".[$i].mmproj // empty" "$EXEC_CONFIG")
+        DRAFTER=$(jq --raw-output ".[$i].drafter // empty" "$EXEC_CONFIG")
+        DRAFTER_TYPE=$(jq --raw-output ".[$i].drafter_type // empty" "$EXEC_CONFIG")
+        DISABLE_REASONING=$(jq --raw-output ".[$i].disable_reasoning // false" "$EXEC_CONFIG")
+        
+        # Extract filename from path for the preset section header
+        MODEL_NAME=$(basename "$MODEL" | sed 's/\.gguf$//')
+        
+        echo "[$MODEL_NAME]" >> "$PRESET_FILE"
+        echo "model = $MODEL" >> "$PRESET_FILE"
+        
+        if [ "$DISABLE_REASONING" = "true" ]; then
+            echo "reasoning = off" >> "$PRESET_FILE"
+        fi
+        
+        if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
+            echo "mmproj = $MMPROJ" >> "$PRESET_FILE"
+        fi
+        
+        HAS_EXTERNAL_DRAFTER="false"
+        if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
+            echo "model-draft = $DRAFTER" >> "$PRESET_FILE"
+            HAS_EXTERNAL_DRAFTER="true"
+        fi
+        
+        if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
+            echo "spec-type = draft-$DRAFTER_TYPE" >> "$PRESET_FILE"
+        fi
+        echo "" >> "$PRESET_FILE"
+    done
+    
+    CMD+=("--models-preset" "$PRESET_FILE")
+    echo "Generated presets.ini:"
+    cat "$PRESET_FILE"
+fi
 
 echo "Starting server with command: ${CMD[*]}"
 exec "${CMD[@]}"
