@@ -47,6 +47,7 @@ RUN set -e; \
 COPY pull_models.py /pull_models.py
 COPY run.sh /run.sh
 COPY public /opt/llama.cpp/public
+COPY logo.png /opt/llama.cpp/public/logo.png
 RUN chmod +x /run.sh
 
 ENTRYPOINT [ "/run.sh" ]

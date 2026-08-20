@@ -104,6 +104,8 @@
         <div id="health-badge" class="status-badge">Connecting...</div>
     </div>
 
+    <img id="dashboard-banner" alt="llama.cpp Add-on Banner" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: block;">
+
     <div class="grid">
         <div class="card">
             <h2>Model Info</h2>
@@ -142,6 +144,9 @@
             // Home Assistant Ingress hosts the add-on at a subpath (e.g., /api/hassio_ingress/xxxxxx).
             // We must dynamically prepend this base path to our API calls.
             const basePath = window.location.pathname.replace(/\/$/, '');
+            
+            // Set the banner image
+            document.getElementById('dashboard-banner').src = `${basePath}/logo.png`;
             
             try {
                 // Fetch Health
