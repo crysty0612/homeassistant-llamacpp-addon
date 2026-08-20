@@ -57,14 +57,21 @@ Navigate to the Add-on's **Log** tab to watch the real-time download progress! M
 
 Once the Add-on says "Server is up and running" in the logs, `llama.cpp` will be exposing an OpenAI-compatible API directly to your Home Assistant internal network.
 
-For native integrations, you can use the automatically generated internal hostname for this add-on:
+### Internal Connection (Recommended for HA Integrations)
+For native integrations running on the same Home Assistant server, use the automatically generated internal hostname and the **fixed internal port 8080**:
+```text
+http://3927ed12-llamacpp:8080/v1
 ```
-http://3927ed12-llamacpp:<ADDON_PORT>/v1
+*(Note: Internal connections always use `8080` regardless of your Network port mapping).*
+
+### External Connection (LAN / Outside HA)
+If you want to access the API from another machine on your network (like a desktop app), use your Home Assistant's IP and the custom port you mapped in the Add-on's **Network** configuration:
+```text
+http://<YOUR_HA_IP>:<ADDON_PORT>/v1
 ```
-*(Where `<ADDON_PORT>` is the port you mapped in the Add-on's **Network** configuration. Default is `8080`.)*
 
 To interact with your newly hosted local model directly from Home Assistant, we recommend the [Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation) integration or [LLM Vision](https://llmvision.gitbook.io/getting-started) for multimodal support!
-- **Base URL:** `http://3927ed12-llamacpp:<ADDON_PORT>/v1`
+- **Base URL:** `http://3927ed12-llamacpp:8080/v1`
 - **API Key:** `llama.cpp` (The key is ignored, but the field cannot be blank).
 
 > See the **Documentation** tab in Home Assistant (or the `DOCS.md` file) for full integration guides!

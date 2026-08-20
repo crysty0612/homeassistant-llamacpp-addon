@@ -25,9 +25,9 @@ Once the add-on is running, you can connect it to Home Assistant using custom in
 
 Your internal Base URL is:
 ```text
-http://3927ed12-llamacpp:<ADDON_PORT>/v1
+http://3927ed12-llamacpp:8080/v1
 ```
-*(Replace `<ADDON_PORT>` with the port mapped in your Network settings, default is `8080`).*
+*(Note: Internal connections via the add-on hostname ALWAYS use port `8080`, regardless of any custom port mappings you set in the Network tab).*
 
 ### 1. Extended OpenAI Conversation
 
@@ -52,8 +52,9 @@ If you have downloaded a multimodal model (like LLaVA or Qwen-VL) and its corres
 2. Add the integration in Home Assistant Settings > Devices & Services.
 3. Select **OpenAI Compatible Provider**.
 4. Configure as follows:
-   - **API Key:** `llama.cpp` 
-   - **Host:** `http://3927ed12-llamacpp:8080/v1`
+   - **API Key:** `llama.cpp` (This field cannot be blank)
+   - **Host:** `3927ed12-llamacpp` (Do not include http://)
+   - **Port:** `8080` (Internal HA network always uses 8080, regardless of Network tab mapping)
 5. You can now use the `llmvision.image_analyzer` service in your automations to analyze local camera feeds using your local model!
 
 ---
