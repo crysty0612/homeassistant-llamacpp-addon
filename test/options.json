@@ -1,8 +1,14 @@
 {
   "LLAMACPP_MODEL_DIR": "/share/llamacpp",
-  "LLAMACPP_MODEL": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf",
-  "LLAMACPP_DRAFTER": "",
-  "LLAMACPP_DRAFTER_TYPE": "none",
+  "MODELS": [
+    {
+      "LLAMACPP_USE_CASE": "text",
+      "LLAMACPP_MODEL": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf",
+      "LLAMACPP_DRAFTER": "",
+      "LLAMACPP_DRAFTER_TYPE": "none",
+      "LLAMACPP_DISABLE_REASONING": false
+    }
+  ],
   "LLAMACPP_VULKAN": false,
   "LLAMACPP_GPU_PATH": "",
   "LLAMACPP_CTX_SIZE": 2048,
