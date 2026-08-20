@@ -1,0 +1,53 @@
+name: "llama.cpp (Vulkan & CPU)"
+description: "Run large language models locally using llama.cpp with advanced features like Drafter and Vulkan GPU support."
+version: "1.0.0"
+slug: "llamacpp"
+arch:
+  - aarch64
+  - amd64
+url: https://github.com/ggerganov/llama.cpp
+map:
+  - config:rw
+  - share:rw
+  - data:rw
+init: false
+ingress: true
+legacy: true
+ingress_port: 8080
+ingress_stream: true
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: "The llama.cpp server API Port"
+options:
+  LLAMACPP_MODEL_DIR: /share/llamacpp
+  LLAMACPP_MODEL: ""
+  LLAMACPP_DRAFTER: ""
+  LLAMACPP_DRAFTER_TYPE: "none"
+  LLAMACPP_VULKAN: true
+  LLAMACPP_GPU_PATH: "/dev/dri/renderD128"
+  LLAMACPP_CTX_SIZE: 4096
+  LLAMACPP_THREADS: 4
+  LLAMACPP_BATCH_SIZE: 512
+  LLAMACPP_PARALLEL: 1
+  LLAMACPP_FLASH_ATTN: true
+  gpus: all
+schema:
+  LLAMACPP_MODEL_DIR: list(/config/llamacpp|/share/llamacpp|/data/llamacpp)
+  LLAMACPP_MODEL: match(^[^/]+/[^/]+:.+\.gguf$)
+  LLAMACPP_DRAFTER: match(^([^/]+/[^/]+:.+\.gguf)?$)
+  LLAMACPP_DRAFTER_TYPE: list(none|mtp|dflash)
+  LLAMACPP_VULKAN: bool
+  LLAMACPP_GPU_PATH: str
+  LLAMACPP_CTX_SIZE: int
+  LLAMACPP_THREADS: int
+  LLAMACPP_BATCH_SIZE: int
+  LLAMACPP_PARALLEL: int
+  LLAMACPP_FLASH_ATTN: bool
+  gpus: str
+devices:
+  - /dev/dri/renderD128
+  - /dev/dri/card0
+  - /dev/dri
+startup: application
+watchdog: tcp://[HOST]:[PORT:8080]

@@ -1,0 +1,48 @@
+name: Test Addon
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build --build-arg BUILD_FROM=ubuntu:24.04 -t llamacpp-addon-test ./llamacpp
+
+      - name: Test Container Boot and Model Pulling
+        run: |
+          # Start the container with the mocked options
+          docker run -d --name llamacpp-test-instance \
+            -p 8080:8080 \
+            -v ${{ github.workspace }}/test/options.json:/data/options.json \
+            llamacpp-addon-test
+
+          # Wait for the server to start (timeout after 5 minutes)
+          echo "Waiting for server to respond on port 8080..."
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
+          
+          echo "Server started successfully!"
+
+      - name: Show Container Logs on Failure
+        if: failure()
+        run: docker logs llamacpp-test-instance
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop llamacpp-test-instance || true
+          docker rm llamacpp-test-instance || true
