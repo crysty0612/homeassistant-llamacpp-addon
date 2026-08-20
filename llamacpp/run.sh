@@ -64,15 +64,22 @@ if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
     CMD+=("--mmproj" "$MMPROJ")
 fi
 
+HAS_EXTERNAL_DRAFTER=false
 if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
     echo "Adding Drafter Model: $DRAFTER"
     CMD+=("-md" "$DRAFTER")
+    HAS_EXTERNAL_DRAFTER=true
 fi
 
 if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
     if [ "$DRAFTER_TYPE" = "mtp" ]; then
-        echo "Enabling Self-Speculative Decoding (MTP)"
-        CMD+=("--spec-type" "mtp")
+        if [ "$HAS_EXTERNAL_DRAFTER" = "true" ]; then
+            echo "Enabling External MTP Speculative Decoding"
+            CMD+=("--spec-type" "draft-mtp")
+        else
+            echo "Enabling Self-Speculative Decoding (MTP)"
+            CMD+=("--spec-type" "mtp")
+        fi
     else
         echo "Adding Speculative Decoding Type: $DRAFTER_TYPE"
         CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
