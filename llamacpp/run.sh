@@ -67,10 +67,14 @@ fi
 if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
     echo "Adding Drafter Model: $DRAFTER"
     CMD+=("-md" "$DRAFTER")
-    
-    if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
+fi
+
+if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
+    if [ "$DRAFTER_TYPE" = "mtp" ]; then
+        echo "Enabling Self-Speculative Decoding (MTP)"
+        CMD+=("--spec-type" "mtp")
+    else
         echo "Adding Speculative Decoding Type: $DRAFTER_TYPE"
-        # MTP maps to draft-mtp, dflash maps to draft-dflash (as per llama.cpp conventions, or we can just pass the string)
         CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
     fi
 fi
