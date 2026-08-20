@@ -1,5 +1,7 @@
-# Home Assistant llama.cpp Add-on
-
+<div align="center">
+  <img src="llamacpp/logo.png" width="150" alt="llama.cpp Add-on Logo">
+  <h1>Home Assistant llama.cpp Add-on</h1>
+</div>
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/crysty0612/homeassistant-llamacpp-addon/test.yaml?label=Build%20Tests&style=for-the-badge)](https://github.com/crysty0612/homeassistant-llamacpp-addon/actions)
 [![HACS Custom Repository](https://img.shields.io/badge/HA_Addon-Ready-blue.svg?style=for-the-badge)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fcrysty0612%2Fhomeassistant-llamacpp-addon)
 
