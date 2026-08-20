@@ -108,10 +108,10 @@
 
     <div class="grid">
         <div class="card">
-            <h2>Model Info</h2>
+            <h2>Available API Models</h2>
             <div class="metric">
-                <div class="metric-label">Loaded Model Path</div>
-                <div class="metric-value highlight" id="model-path">Fetching...</div>
+                <div class="metric-label">Use these EXACT names in Home Assistant!</div>
+                <div class="metric-value highlight" id="model-path" style="font-size: 14px; white-space: pre-wrap; font-family: monospace;">Fetching...</div>
             </div>
             <div class="metric">
                 <div class="metric-label">Model Type</div>
@@ -163,6 +163,7 @@
 
                 let isRouterMode = false;
                 let firstProps = null;
+                let modelsData = null;
 
                 // Try fetching global props (Works in standard mode, fails with 400 in router mode)
                 const globalPropsRes = await fetch(`${basePath}/props`);
@@ -189,7 +190,7 @@
                     try {
                         const modelsRes = await fetch(`${basePath}/v1/models`);
                         if (modelsRes.ok) {
-                            const modelsData = await modelsRes.json();
+                            modelsData = await modelsRes.json();
                             if (modelsData && modelsData.data) {
                                 for (const m of modelsData.data) {
                                     const modelId = m.id;
@@ -230,8 +231,19 @@
                 }
 
                 // Update UI
-                if (firstProps) {
-                    document.getElementById('model-path').textContent = firstProps.model_path || 'Unknown';
+                if (isRouterMode && modelsData && modelsData.data) {
+                    const modelNames = modelsData.data.map(m => m.id).join('\n');
+                    document.getElementById('model-path').textContent = modelNames || 'Unknown';
+                    // Update props if at least one model is loaded and fetched props
+                    if (firstProps) {
+                        document.getElementById('ctx-size').textContent = firstProps.default_generation_settings?.n_ctx || 'Unknown';
+                        document.getElementById('system-info').textContent = firstProps.model_ftype || 'Unknown';
+                    }
+                } else if (firstProps) {
+                    // In standard mode, just show the file name as the API model doesn't strictly matter
+                    const p = firstProps.model_path || 'Unknown';
+                    const filename = p.split('/').pop().replace('.gguf', '');
+                    document.getElementById('model-path').textContent = filename;
                     document.getElementById('ctx-size').textContent = firstProps.default_generation_settings?.n_ctx || 'Unknown';
                     document.getElementById('system-info').textContent = firstProps.model_ftype || 'Unknown';
                 }
