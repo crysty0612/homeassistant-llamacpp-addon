@@ -114,7 +114,7 @@
                 <div class="metric-value highlight" id="model-path">Fetching...</div>
             </div>
             <div class="metric">
-                <div class="metric-label">System Hardware</div>
+                <div class="metric-label">Model Type</div>
                 <div class="metric-value" id="system-info" style="font-size: 14px;">Fetching...</div>
             </div>
         </div>
@@ -165,9 +165,9 @@
                 const propsRes = await fetch(`${basePath}/props`);
                 if (propsRes.ok) {
                     const props = await propsRes.json();
-                    document.getElementById('model-path').textContent = props.default_generation_settings?.model || 'Unknown';
+                    document.getElementById('model-path').textContent = props.model_path || 'Unknown';
                     document.getElementById('ctx-size').textContent = props.default_generation_settings?.n_ctx || 'Unknown';
-                    document.getElementById('system-info').textContent = props.system_info || 'Unknown';
+                    document.getElementById('system-info').textContent = props.model_ftype || 'Unknown';
                 }
 
                 // Fetch Slots
@@ -176,12 +176,22 @@
                     const slots = await slotsRes.json();
                     const slotsList = document.getElementById('slots-list');
                     if (slots && slots.length > 0) {
-                        slotsList.innerHTML = slots.map(s => `
-                            <div class="slot ${s.state === 0 ? 'slot-idle' : 'slot-busy'}">
-                                <div><strong>Slot ${s.id}</strong> - ${s.state === 0 ? 'Idle' : 'Processing'}</div>
-                                <div>Tokens: ${s.n_prompt_tokens || 0} prompt / ${s.n_decoded_tokens || 0} decoded</div>
+                        slotsList.innerHTML = slots.map(s => {
+                            const isProcessing = s.is_processing === true;
+                            const promptTotal = s.n_prompt_tokens || 0;
+                            const promptDone = s.n_prompt_tokens_processed || 0;
+                            const nDecoded = (s.next_token && s.next_token[0]) ? s.next_token[0].n_decoded : 0;
+                            const nRemain = (s.next_token && s.next_token[0]) ? s.next_token[0].n_remain : 0;
+                            
+                            return `
+                            <div class="slot ${!isProcessing ? 'slot-idle' : 'slot-busy'}">
+                                <div><strong>Slot ${s.id}</strong> - ${!isProcessing ? 'Idle' : 'Processing'}</div>
+                                <div style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+                                    ${isProcessing ? `Prefill: ${promptDone}/${promptTotal} | Decode: ${nDecoded} generated (${nRemain} remain)` : `Ready`}
+                                </div>
                             </div>
-                        `).join('');
+                            `;
+                        }).join('');
                     } else {
                         slotsList.innerHTML = `<p style="color: var(--text-muted)">No slots configured or active.</p>`;
                     }
