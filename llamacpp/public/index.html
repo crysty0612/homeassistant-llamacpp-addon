@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>llama.cpp Add-on Health</title>
+    <style>
+        :root {
+            --bg-color: #111111;
+            --card-bg: #1c1c1c;
+            --text-main: #e1e1e1;
+            --text-muted: #888888;
+            --primary: #03a9f4;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 500;
+        }
+        .status-badge {
+            margin-left: auto;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: var(--warning);
+            color: #000;
+        }
+        .status-badge.ok {
+            background-color: var(--success);
+            color: #fff;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 16px;
+            margin-top: 0;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric {
+            margin-bottom: 15px;
+        }
+        .metric:last-child {
+            margin-bottom: 0;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .metric-value {
+            font-size: 18px;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .highlight {
+            color: var(--primary);
+        }
+        .slots-container {
+            margin-top: 20px;
+        }
+        .slot {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .slot-idle { border-left: 4px solid var(--text-muted); }
+        .slot-busy { border-left: 4px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>llama.cpp Server Dashboard</h1>
+        <div id="health-badge" class="status-badge">Connecting...</div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Model Info</h2>
+            <div class="metric">
+                <div class="metric-label">Loaded Model Path</div>
+                <div class="metric-value highlight" id="model-path">Fetching...</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">System Hardware</div>
+                <div class="metric-value" id="system-info" style="font-size: 14px;">Fetching...</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Context & Generation</h2>
+            <div class="metric">
+                <div class="metric-label">Context Size (Tokens)</div>
+                <div class="metric-value" id="ctx-size">Fetching...</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Current Configuration</div>
+                <div class="metric-value" style="font-size: 14px;">See add-on logs for Drafter, Vulkan, and Batch Size status.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card slots-container">
+        <h2>Active Request Slots</h2>
+        <div id="slots-list">
+            <p style="color: var(--text-muted)">Loading slots...</p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchMetrics() {
+            try {
+                // Fetch Health
+                const healthRes = await fetch('/health');
+                const health = await healthRes.json();
+                const badge = document.getElementById('health-badge');
+                if (health.status === 'ok') {
+                    badge.textContent = 'Running';
+                    badge.className = 'status-badge ok';
+                } else {
+                    badge.textContent = health.status || 'Starting...';
+                    badge.className = 'status-badge';
+                }
+
+                // Fetch Props
+                const propsRes = await fetch('/props');
+                if (propsRes.ok) {
+                    const props = await propsRes.json();
+                    document.getElementById('model-path').textContent = props.default_generation_settings?.model || 'Unknown';
+                    document.getElementById('ctx-size').textContent = props.default_generation_settings?.n_ctx || 'Unknown';
+                    document.getElementById('system-info').textContent = props.system_info || 'Unknown';
+                }
+
+                // Fetch Slots
+                const slotsRes = await fetch('/slots');
+                if (slotsRes.ok) {
+                    const slots = await slotsRes.json();
+                    const slotsList = document.getElementById('slots-list');
+                    if (slots && slots.length > 0) {
+                        slotsList.innerHTML = slots.map(s => `
+                            <div class="slot ${s.state === 0 ? 'slot-idle' : 'slot-busy'}">
+                                <div><strong>Slot ${s.id}</strong> - ${s.state === 0 ? 'Idle' : 'Processing'}</div>
+                                <div>Tokens: ${s.n_prompt_tokens || 0} prompt / ${s.n_decoded_tokens || 0} decoded</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        slotsList.innerHTML = `<p style="color: var(--text-muted)">No slots configured or active.</p>`;
+                    }
+                }
+            } catch (err) {
+                const badge = document.getElementById('health-badge');
+                badge.textContent = 'Offline';
+                badge.className = 'status-badge';
+            }
+        }
+
+        // Poll every 2 seconds
+        setInterval(fetchMetrics, 2000);
+        fetchMetrics();
+    </script>
+</body>
+</html>

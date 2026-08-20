@@ -39,15 +39,15 @@ If the button above does not work for you:
 Navigate to the Add-on's **Configuration** tab. You will be presented with a highly structured UI. 
 
 ### Mandatory Fields
-* **Main Model to load:** Provide the strict Hugging Face path to your GGUF file. 
-  * Format: `organization/repository:filename.gguf`
-  * Example: `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`
+* **Main Model to load:** Provide the Hugging Face path to your model. You can specify the exact file or a partial name/pattern.
+  * Format: `organization/repository:filename_or_pattern`
+  * Example: `unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL` or `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`
 
 ### Recommended Advanced Settings
-* **Context Size:** The maximum context window of the model (default `2048`). Increasing this will increase RAM usage.
+* **Context Size:** The maximum context window of the model (default `4096`). Increasing this will increase RAM usage.
 * **Vulkan Hardware Acceleration:** Toggle this on if your HA server has a compatible GPU.
 * **GPU Device Path:** Default is `/dev/dri/renderD128`. Only applicable if Vulkan is enabled.
-* **Speculative Decoding:** To enable, specify a smaller `Drafter Model` (using the same strict format as the main model) and pick the `Drafter Type` (MTP or DFLASH) from the dropdown.
+* **Speculative Decoding:** To enable, specify a smaller `Drafter Model` and pick the `Drafter Type` (MTP or DFLASH).
 
 ### First Boot
 On the first boot, the Add-on will reach out to Hugging Face and download the specified models. **This will take time** depending on your internet connection. 
@@ -55,14 +55,16 @@ Navigate to the Add-on's **Log** tab to watch the real-time download progress! M
 
 ## 🔌 Connecting Home Assistant to the API
 
-Once the Add-on says "Server is up and running" in the logs, `llama.cpp` will be exposing an OpenAI-compatible API on your Home Assistant server, usually accessible via:
+Once the Add-on says "Server is up and running" in the logs, `llama.cpp` will be exposing an OpenAI-compatible API directly to your Home Assistant internal network.
 
+For native integrations, you can use the automatically generated internal hostname for this add-on:
 ```
-http://<YOUR_HA_IP>:8080/v1
+http://3927ed12-llamacpp:<ADDON_PORT>/v1
 ```
+*(Where `<ADDON_PORT>` is the port you mapped in the Add-on's **Network** configuration. Default is `8080`.)*
 
-*(Note: You can change the `8080` port mapping in the Add-on's Network configuration if you wish to run multiple model instances concurrently).*
-
-To interact with your newly hosted local model directly from Home Assistant, you can use the official [OpenAI Conversation Integration](https://www.home-assistant.io/integrations/openai_conversation/). 
-- **Base URL:** `http://<YOUR_HA_IP>:8080/v1`
+To interact with your newly hosted local model directly from Home Assistant, we recommend the [Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation) integration or [LLM Vision](https://llmvision.gitbook.io/getting-started) for multimodal support!
+- **Base URL:** `http://3927ed12-llamacpp:<ADDON_PORT>/v1`
 - **API Key:** `llama.cpp` (The key is ignored, but the field cannot be blank).
+
+> See the **Documentation** tab in Home Assistant (or the `DOCS.md` file) for full integration guides!

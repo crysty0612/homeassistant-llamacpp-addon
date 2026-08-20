@@ -53,7 +53,7 @@ fi
 # Set library path so the server can find its .so files (libggml, libllama, etc)
 export LD_LIBRARY_PATH="$SERVER_DIR:$LD_LIBRARY_PATH"
 
-CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-m" "$MODEL" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL")
+CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-m" "$MODEL" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics")
 
 if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")

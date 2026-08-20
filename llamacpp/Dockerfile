@@ -43,9 +43,10 @@ RUN set -e; \
     tar -xzf vulkan.tar.gz -C build-vulkan --strip-components=1; \
     rm vulkan.tar.gz
 
-# Add the runtime script and python utility
+# Add the runtime script, python utility, and public web UI
 COPY pull_models.py /pull_models.py
 COPY run.sh /run.sh
+COPY public /opt/llama.cpp/public
 RUN chmod +x /run.sh
 
 ENTRYPOINT [ "/run.sh" ]
