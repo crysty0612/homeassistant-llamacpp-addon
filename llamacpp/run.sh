@@ -22,7 +22,7 @@ if [ ! -f "$EXEC_CONFIG" ]; then
 fi
 
 
-UPDATE_ON_BOOT=$(jq --raw-output '.LLAMACPP_UPDATE_ON_BOOT // "false"' "$CONFIG_PATH")
+UPDATE_ON_BOOT=$(jq --raw-output 'if has("LLAMACPP_UPDATE_ON_BOOT") then .LLAMACPP_UPDATE_ON_BOOT else "false" end' "$CONFIG_PATH")
 
 if [ "$UPDATE_ON_BOOT" = "true" ]; then
     echo "=================================================="
@@ -55,9 +55,9 @@ CTX_SIZE=$(jq --raw-output '.LLAMACPP_CTX_SIZE // 4096' "$CONFIG_PATH")
 THREADS=$(jq --raw-output '.LLAMACPP_THREADS // 4' "$CONFIG_PATH")
 BATCH_SIZE=$(jq --raw-output '.LLAMACPP_BATCH_SIZE // 512' "$CONFIG_PATH")
 PARALLEL=$(jq --raw-output '.LLAMACPP_PARALLEL // 1' "$CONFIG_PATH")
-USE_VULKAN=$(jq --raw-output '.LLAMACPP_VULKAN // "true"' "$CONFIG_PATH")
+USE_VULKAN=$(jq --raw-output 'if has("LLAMACPP_VULKAN") then .LLAMACPP_VULKAN else "true" end' "$CONFIG_PATH")
 GPU_PATH=$(jq --raw-output '.LLAMACPP_GPU_PATH // "/dev/dri/renderD128"' "$CONFIG_PATH")
-FLASH_ATTN=$(jq --raw-output '.LLAMACPP_FLASH_ATTN // "false"' "$CONFIG_PATH")
+FLASH_ATTN=$(jq --raw-output 'if has("LLAMACPP_FLASH_ATTN") then .LLAMACPP_FLASH_ATTN else "false" end' "$CONFIG_PATH")
 
 # Determine which binary to use
 SERVER_DIR="/opt/llama.cpp/build-cpu"
@@ -71,6 +71,8 @@ if [ "$USE_VULKAN" = "true" ]; then
     else
         echo "WARNING: GPU path $GPU_PATH not found! Falling back to CPU binary."
     fi
+else
+    echo "Vulkan disabled by configuration. Using CPU binary."
 fi
 
 # Set library path so the server can find its .so files (libggml, libllama, etc)
