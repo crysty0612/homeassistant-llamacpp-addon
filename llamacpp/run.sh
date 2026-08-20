@@ -26,6 +26,33 @@ MMPROJ=$(jq --raw-output '.mmproj // empty' "$EXEC_CONFIG")
 DRAFTER=$(jq --raw-output '.drafter // empty' "$EXEC_CONFIG")
 DRAFTER_TYPE=$(jq --raw-output '.drafter_type // empty' "$EXEC_CONFIG")
 
+UPDATE_ON_BOOT=$(jq --raw-output '.LLAMACPP_UPDATE_ON_BOOT // "false"' "$CONFIG_PATH")
+
+if [ "$UPDATE_ON_BOOT" = "true" ]; then
+    echo "=================================================="
+    echo "Update on Boot enabled! Fetching latest llama.cpp..."
+    echo "=================================================="
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then LLAMA_ARCH="x64";
+    elif [ "$ARCH" = "arm64" ]; then LLAMA_ARCH="arm64";
+    else echo "Unsupported architecture: $ARCH"; exit 1; fi
+    
+    LATEST_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest)
+    
+    CPU_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-${LLAMA_ARCH}\.tar\.gz" | head -n 1)
+    echo "Downloading updated CPU release: $CPU_URL"
+    curl -sL -o /tmp/cpu.tar.gz "$CPU_URL"
+    tar -xzf /tmp/cpu.tar.gz -C /opt/llama.cpp/build-cpu --strip-components=1
+    
+    VULKAN_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-vulkan-${LLAMA_ARCH}\.tar\.gz" | head -n 1)
+    echo "Downloading updated Vulkan release: $VULKAN_URL"
+    curl -sL -o /tmp/vulkan.tar.gz "$VULKAN_URL"
+    tar -xzf /tmp/vulkan.tar.gz -C /opt/llama.cpp/build-vulkan --strip-components=1
+    
+    rm -f /tmp/cpu.tar.gz /tmp/vulkan.tar.gz
+    echo "Update complete!"
+fi
+
 # Read server options from user config
 PORT=$(jq --raw-output '.ingress_port // 8080' "$CONFIG_PATH")
 CTX_SIZE=$(jq --raw-output '.LLAMACPP_CTX_SIZE // 4096' "$CONFIG_PATH")
