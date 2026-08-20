@@ -21,10 +21,6 @@ if [ ! -f "$EXEC_CONFIG" ]; then
     exit 1
 fi
 
-MODEL=$(jq --raw-output '.model // empty' "$EXEC_CONFIG")
-MMPROJ=$(jq --raw-output '.mmproj // empty' "$EXEC_CONFIG")
-DRAFTER=$(jq --raw-output '.drafter // empty' "$EXEC_CONFIG")
-DRAFTER_TYPE=$(jq --raw-output '.drafter_type // empty' "$EXEC_CONFIG")
 
 UPDATE_ON_BOOT=$(jq --raw-output '.LLAMACPP_UPDATE_ON_BOOT // "false"' "$CONFIG_PATH")
 
@@ -80,32 +76,53 @@ fi
 # Set library path so the server can find its .so files (libggml, libllama, etc)
 export LD_LIBRARY_PATH="$SERVER_DIR:$LD_LIBRARY_PATH"
 
-CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-m" "$MODEL" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics")
+# Generate presets.ini
+PRESET_FILE="/tmp/presets.ini"
+rm -f "$PRESET_FILE"
+
+# Iterate over JSON array
+NUM_MODELS=$(jq '. | length' "$EXEC_CONFIG")
+if [ "$NUM_MODELS" -eq 0 ]; then
+    echo "No models configured in exec config!"
+    exit 1
+fi
+
+for i in $(seq 0 $((NUM_MODELS-1))); do
+    MODEL=$(jq --raw-output ".[$i].model // empty" "$EXEC_CONFIG")
+    MMPROJ=$(jq --raw-output ".[$i].mmproj // empty" "$EXEC_CONFIG")
+    DRAFTER=$(jq --raw-output ".[$i].drafter // empty" "$EXEC_CONFIG")
+    DRAFTER_TYPE=$(jq --raw-output ".[$i].drafter_type // empty" "$EXEC_CONFIG")
+    
+    # Extract filename from path for the preset section header
+    MODEL_NAME=$(basename "$MODEL" | sed 's/\.gguf$//')
+    
+    echo "[$MODEL_NAME]" >> "$PRESET_FILE"
+    echo "model = $MODEL" >> "$PRESET_FILE"
+    
+    if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
+        echo "mmproj = $MMPROJ" >> "$PRESET_FILE"
+    fi
+    
+    HAS_EXTERNAL_DRAFTER="false"
+    if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
+        echo "model-draft = $DRAFTER" >> "$PRESET_FILE"
+        HAS_EXTERNAL_DRAFTER="true"
+    fi
+    
+    if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
+        echo "spec-type = draft-$DRAFTER_TYPE" >> "$PRESET_FILE"
+    fi
+    echo "" >> "$PRESET_FILE"
+done
+
+CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics" "--models-preset" "$PRESET_FILE")
 
 if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")
 fi
 
-if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
-    echo "Adding mmproj: $MMPROJ"
-    CMD+=("--mmproj" "$MMPROJ")
-fi
-
-HAS_EXTERNAL_DRAFTER=false
-if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
-    echo "Adding Drafter Model: $DRAFTER"
-    CMD+=("-md" "$DRAFTER")
-    HAS_EXTERNAL_DRAFTER=true
-fi
-
-if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
-    if [ "$HAS_EXTERNAL_DRAFTER" = "true" ]; then
-        echo "Enabling External Speculative Decoding: $DRAFTER_TYPE"
-    else
-        echo "Enabling Self-Speculative Decoding: $DRAFTER_TYPE"
-    fi
-    CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
-fi
+echo "Generated presets.ini:"
+cat "$PRESET_FILE"
 
 echo "Starting server with command: ${CMD[*]}"
 exec "${CMD[@]}"

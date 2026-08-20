@@ -59,58 +59,71 @@ def main():
     with open(options_path, "r") as f:
         options = json.load(f)
 
-    use_case = options.get("LLAMACPP_USE_CASE", "text").strip().lower()
+    models_list = options.get("MODELS", [])
     model_dir = options.get("LLAMACPP_MODEL_DIR", "/share/llamacpp")
-    main_model = options.get("LLAMACPP_MODEL", "").strip()
-    
-    # Ignore Drafter if Vision use case is selected
-    if use_case == "vision":
-        print("Vision use case selected. Disabling speculative decoding to prevent crashes.")
-        drafter = ""
-        drafter_type = "none"
-    else:
-        drafter = options.get("LLAMACPP_DRAFTER", "").strip()
-        drafter_type = options.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
     
     os.makedirs(model_dir, exist_ok=True)
     
-    if not main_model:
-        print("No main model configured. Please configure LLAMACPP_MODEL in the add-on UI.")
+    if not models_list:
+        print("No models configured. Please configure MODELS in the add-on UI.")
         sys.exit(1)
     
-    exec_config = {}
+    exec_configs = []
     
-    # Process main model
-    if ":" not in main_model:
-        print(f"Invalid model format '{main_model}'. Expected 'org/repo:filename_or_pattern'")
-        sys.exit(1)
+    for idx, model_cfg in enumerate(models_list):
+        use_case = model_cfg.get("LLAMACPP_USE_CASE", "text").strip().lower()
+        main_model = model_cfg.get("LLAMACPP_MODEL", "").strip()
         
-    model_repo, model_file_pattern = main_model.split(":", 1)
-    model_file = resolve_filename(model_repo, model_file_pattern)
-    model_path = download_model(model_repo, model_file, model_dir)
-    mmproj_path = find_and_download_mmproj(model_repo, model_dir)
-    
-    exec_config["model"] = model_path
-    exec_config["mmproj"] = mmproj_path
-    
-    # Process drafter model
-    drafter_path = None
-    if drafter:
-        if ":" not in drafter:
-            print(f"Invalid drafter format '{drafter}'. Expected 'org/repo:filename_or_pattern'")
+        if not main_model:
+            print(f"Model entry {idx} is missing LLAMACPP_MODEL. Skipping.")
+            continue
+            
+        if use_case == "vision":
+            print(f"[{main_model}] Vision use case selected. Disabling speculative decoding to prevent crashes.")
+            drafter = ""
+            drafter_type = "none"
+        else:
+            drafter = model_cfg.get("LLAMACPP_DRAFTER", "").strip()
+            drafter_type = model_cfg.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
+            
+        exec_config = {}
+        exec_config["use_case"] = use_case
+        
+        # Process main model
+        if ":" not in main_model:
+            print(f"Invalid model format '{main_model}'. Expected 'org/repo:filename_or_pattern'")
             sys.exit(1)
-        drafter_repo, drafter_file_pattern = drafter.split(":", 1)
-        drafter_file = resolve_filename(drafter_repo, drafter_file_pattern)
-        drafter_path = download_model(drafter_repo, drafter_file, model_dir)
-    
-    exec_config["drafter"] = drafter_path
-    
-    if drafter_type.lower() != "none":
-        exec_config["drafter_type"] = drafter_type
+            
+        model_repo, model_file_pattern = main_model.split(":", 1)
+        model_file = resolve_filename(model_repo, model_file_pattern)
+        model_path = download_model(model_repo, model_file, model_dir)
+        
+        exec_config["model"] = model_path
+        
+        if use_case == "vision":
+            mmproj_path = find_and_download_mmproj(model_repo, model_dir)
+            exec_config["mmproj"] = mmproj_path
+        
+        # Process drafter model
+        drafter_path = None
+        if drafter:
+            if ":" not in drafter:
+                print(f"Invalid drafter format '{drafter}'. Expected 'org/repo:filename_or_pattern'")
+                sys.exit(1)
+            drafter_repo, drafter_file_pattern = drafter.split(":", 1)
+            drafter_file = resolve_filename(drafter_repo, drafter_file_pattern)
+            drafter_path = download_model(drafter_repo, drafter_file, model_dir)
+        
+        exec_config["drafter"] = drafter_path
+        
+        if drafter_type.lower() != "none":
+            exec_config["drafter_type"] = drafter_type
+            
+        exec_configs.append(exec_config)
             
     # Save the execution config
     with open("/tmp/exec_config.json", "w") as f:
-        json.dump(exec_config, f)
+        json.dump(exec_configs, f)
         
     print("--- Models currently available in directory ---")
     for f in os.listdir(model_dir):
