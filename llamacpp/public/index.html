@@ -139,9 +139,13 @@
 
     <script>
         async function fetchMetrics() {
+            // Home Assistant Ingress hosts the add-on at a subpath (e.g., /api/hassio_ingress/xxxxxx).
+            // We must dynamically prepend this base path to our API calls.
+            const basePath = window.location.pathname.replace(/\/$/, '');
+            
             try {
                 // Fetch Health
-                const healthRes = await fetch('/health');
+                const healthRes = await fetch(`${basePath}/health`);
                 const health = await healthRes.json();
                 const badge = document.getElementById('health-badge');
                 if (health.status === 'ok') {
@@ -153,7 +157,7 @@
                 }
 
                 // Fetch Props
-                const propsRes = await fetch('/props');
+                const propsRes = await fetch(`${basePath}/props`);
                 if (propsRes.ok) {
                     const props = await propsRes.json();
                     document.getElementById('model-path').textContent = props.default_generation_settings?.model || 'Unknown';
@@ -162,7 +166,7 @@
                 }
 
                 // Fetch Slots
-                const slotsRes = await fetch('/slots');
+                const slotsRes = await fetch(`${basePath}/slots`);
                 if (slotsRes.ok) {
                     const slots = await slotsRes.json();
                     const slotsList = document.getElementById('slots-list');
@@ -181,6 +185,7 @@
                 const badge = document.getElementById('health-badge');
                 badge.textContent = 'Offline';
                 badge.className = 'status-badge';
+                console.error("Fetch error: ", err);
             }
         }
 
