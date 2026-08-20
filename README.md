@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="llamacpp/logo.png" width="150" alt="llama.cpp Add-on Logo">
+  <img src="llamacpp/icon.png" width="150" alt="llama.cpp Add-on Logo">
   <h1>Home Assistant llama.cpp Add-on</h1>
 </div>
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/crysty0612/homeassistant-llamacpp-addon/test.yaml?label=Build%20Tests&style=for-the-badge)](https://github.com/crysty0612/homeassistant-llamacpp-addon/actions)
