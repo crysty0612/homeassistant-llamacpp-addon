@@ -99,18 +99,12 @@ if [ -n "$DRAFTER" ] && [ "$DRAFTER" != "null" ]; then
 fi
 
 if [ -n "$DRAFTER_TYPE" ] && [ "$DRAFTER_TYPE" != "none" ]; then
-    if [ "$DRAFTER_TYPE" = "mtp" ]; then
-        if [ "$HAS_EXTERNAL_DRAFTER" = "true" ]; then
-            echo "Enabling External MTP Speculative Decoding"
-            CMD+=("--spec-type" "draft-mtp")
-        else
-            echo "Enabling Self-Speculative Decoding (MTP)"
-            CMD+=("--spec-type" "mtp")
-        fi
+    if [ "$HAS_EXTERNAL_DRAFTER" = "true" ]; then
+        echo "Enabling External Speculative Decoding: $DRAFTER_TYPE"
     else
-        echo "Adding Speculative Decoding Type: $DRAFTER_TYPE"
-        CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
+        echo "Enabling Self-Speculative Decoding: $DRAFTER_TYPE"
     fi
+    CMD+=("--spec-type" "draft-$DRAFTER_TYPE")
 fi
 
 echo "Starting server with command: ${CMD[*]}"
