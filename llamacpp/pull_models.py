@@ -3,6 +3,25 @@ import sys
 import json
 from huggingface_hub import hf_hub_download, HfApi
 
+def resolve_filename(repo_id, filename_pattern):
+    if filename_pattern.endswith(".gguf"):
+        return filename_pattern
+    print(f"Resolving full filename for pattern '{filename_pattern}' in repo '{repo_id}'...")
+    api = HfApi()
+    try:
+        files = api.list_repo_files(repo_id=repo_id)
+        # Find first file that contains the pattern and ends with .gguf
+        matching_files = [f for f in files if filename_pattern in f and f.endswith(".gguf")]
+        if matching_files:
+            print(f"Resolved to {matching_files[0]}")
+            return matching_files[0]
+        else:
+            print(f"Could not resolve pattern '{filename_pattern}' to a .gguf file in {repo_id}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"Error checking repo files: {e}")
+        sys.exit(1)
+
 def download_model(repo_id, filename, dest_dir):
     print(f"Downloading {filename} from {repo_id}...")
     try:
@@ -55,10 +74,11 @@ def main():
     
     # Process main model
     if ":" not in main_model:
-        print(f"Invalid model format '{main_model}'. Expected 'org/repo:filename.gguf'")
+        print(f"Invalid model format '{main_model}'. Expected 'org/repo:filename_or_pattern'")
         sys.exit(1)
         
-    model_repo, model_file = main_model.split(":", 1)
+    model_repo, model_file_pattern = main_model.split(":", 1)
+    model_file = resolve_filename(model_repo, model_file_pattern)
     model_path = download_model(model_repo, model_file, model_dir)
     mmproj_path = find_and_download_mmproj(model_repo, model_dir)
     
@@ -69,9 +89,10 @@ def main():
     drafter_path = None
     if drafter:
         if ":" not in drafter:
-            print(f"Invalid drafter format '{drafter}'. Expected 'org/repo:filename.gguf'")
+            print(f"Invalid drafter format '{drafter}'. Expected 'org/repo:filename_or_pattern'")
             sys.exit(1)
-        drafter_repo, drafter_file = drafter.split(":", 1)
+        drafter_repo, drafter_file_pattern = drafter.split(":", 1)
+        drafter_file = resolve_filename(drafter_repo, drafter_file_pattern)
         drafter_path = download_model(drafter_repo, drafter_file, model_dir)
     
     exec_config["drafter"] = drafter_path

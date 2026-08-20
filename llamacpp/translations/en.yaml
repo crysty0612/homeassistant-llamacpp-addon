@@ -4,10 +4,10 @@ configuration:
     description: Directory where the downloaded models are stored. Ensure sufficient space.
   LLAMACPP_MODEL:
     name: Main Model (Hugging Face)
-    description: "REQUIRED. Format MUST BE 'org/repo:filename.gguf'. Example: 'bartowski/Llama-3.2-1B-Instruct-GGUF:Llama-3.2-1B-Instruct-Q4_K_M.gguf'."
+    description: "REQUIRED. Format: 'org/repo:filename_or_pattern'. Example: 'Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf' or 'unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL'."
   LLAMACPP_DRAFTER:
     name: Drafter Model (Optional)
-    description: "Format MUST BE 'org/repo:filename.gguf'. Leave blank if not using an external drafter model file."
+    description: "Format: 'org/repo:filename_or_pattern'. Leave blank if not using an external drafter model."
   LLAMACPP_DRAFTER_TYPE:
     name: Drafter Type
     description: "Type of speculative decoding. Select 'none' if disabled, 'mtp' for built-in/external Multi-Token Prediction, or 'dflash' for DFlash."
@@ -32,3 +32,6 @@ configuration:
   LLAMACPP_FLASH_ATTN:
     name: Flash Attention
     description: Enable flash attention for faster inference (recommended).
+  LLAMACPP_HF_TOKEN:
+    name: Hugging Face Token (Optional)
+    description: "Provide a Hugging Face token (starting with 'hf_') to download gated models or increase rate limits."

@@ -31,11 +31,12 @@ options:
   LLAMACPP_BATCH_SIZE: 512
   LLAMACPP_PARALLEL: 1
   LLAMACPP_FLASH_ATTN: true
+  LLAMACPP_HF_TOKEN: ""
   gpus: all
 schema:
   LLAMACPP_MODEL_DIR: list(/config/llamacpp|/share/llamacpp|/data/llamacpp)
-  LLAMACPP_MODEL: match(^[^/]+/[^/]+:.+\.gguf$)
-  LLAMACPP_DRAFTER: match(^([^/]+/[^/]+:.+\.gguf)?$)
+  LLAMACPP_MODEL: match(^[^/]+/[^/]+:.+$)
+  LLAMACPP_DRAFTER: match(^([^/]+/[^/]+:.+)?$)
   LLAMACPP_DRAFTER_TYPE: list(none|mtp|dflash)
   LLAMACPP_VULKAN: bool
   LLAMACPP_GPU_PATH: str
@@ -44,6 +45,7 @@ schema:
   LLAMACPP_BATCH_SIZE: int
   LLAMACPP_PARALLEL: int
   LLAMACPP_FLASH_ATTN: bool
+  LLAMACPP_HF_TOKEN: match(^(hf_.+)?$)
   gpus: str
 devices:
   - /dev/dri/renderD128
