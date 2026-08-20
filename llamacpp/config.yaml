@@ -1,6 +1,6 @@
 name: "llama.cpp (Vulkan & CPU)"
 description: "Run large language models locally using llama.cpp with advanced features like Drafter and Vulkan GPU support."
-version: "1.1.0"
+version: "1.1.1"
 slug: "llamacpp"
 arch:
   - aarch64
@@ -25,6 +25,7 @@ options:
   MODELS:
     - LLAMACPP_USE_CASE: "text"
       LLAMACPP_MODEL: ""
+      LLAMACPP_DISABLE_REASONING: false
       LLAMACPP_DRAFTER: ""
       LLAMACPP_DRAFTER_TYPE: "none"
   LLAMACPP_VULKAN: true
@@ -42,6 +43,7 @@ schema:
   MODELS:
     - LLAMACPP_USE_CASE: list(text|vision)
       LLAMACPP_MODEL: match(^[^/]+/[^/]+:.+$)
+      LLAMACPP_DISABLE_REASONING: bool
       LLAMACPP_DRAFTER: match(^([^/]+/[^/]+:.+)?$)
       LLAMACPP_DRAFTER_TYPE: list(none|mtp|dflash)
   LLAMACPP_VULKAN: bool

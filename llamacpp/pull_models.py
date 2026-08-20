@@ -73,6 +73,7 @@ def main():
     for idx, model_cfg in enumerate(models_list):
         use_case = model_cfg.get("LLAMACPP_USE_CASE", "text").strip().lower()
         main_model = model_cfg.get("LLAMACPP_MODEL", "").strip()
+        disable_reasoning = model_cfg.get("LLAMACPP_DISABLE_REASONING", False)
         
         if not main_model:
             print(f"Model entry {idx} is missing LLAMACPP_MODEL. Skipping.")
@@ -88,6 +89,7 @@ def main():
             
         exec_config = {}
         exec_config["use_case"] = use_case
+        exec_config["disable_reasoning"] = disable_reasoning
         
         # Process main model
         if ":" not in main_model:

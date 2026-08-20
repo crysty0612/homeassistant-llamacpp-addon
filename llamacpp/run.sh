@@ -92,12 +92,17 @@ for i in $(seq 0 $((NUM_MODELS-1))); do
     MMPROJ=$(jq --raw-output ".[$i].mmproj // empty" "$EXEC_CONFIG")
     DRAFTER=$(jq --raw-output ".[$i].drafter // empty" "$EXEC_CONFIG")
     DRAFTER_TYPE=$(jq --raw-output ".[$i].drafter_type // empty" "$EXEC_CONFIG")
+    DISABLE_REASONING=$(jq --raw-output ".[$i].disable_reasoning // false" "$EXEC_CONFIG")
     
     # Extract filename from path for the preset section header
     MODEL_NAME=$(basename "$MODEL" | sed 's/\.gguf$//')
     
     echo "[$MODEL_NAME]" >> "$PRESET_FILE"
     echo "model = $MODEL" >> "$PRESET_FILE"
+    
+    if [ "$DISABLE_REASONING" = "true" ]; then
+        echo "reasoning = off" >> "$PRESET_FILE"
+    fi
     
     if [ -n "$MMPROJ" ] && [ "$MMPROJ" != "null" ]; then
         echo "mmproj = $MMPROJ" >> "$PRESET_FILE"
