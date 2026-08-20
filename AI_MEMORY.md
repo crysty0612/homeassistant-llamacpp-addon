@@ -34,6 +34,7 @@ A testing harness has been configured in the `test/` directory. Since Home Assis
 - The repository includes an AI skill for this. You can refer to `.agents/skills/test-addon/SKILL.md` for complete testing instructions.
 
 ## Development Notes & Best Practices
+- **Version Bumping**: You MUST bump the `version` field in `llamacpp/config.yaml` upon any codebase changes (e.g., from `1.0.0` to `1.0.1`). This is a strict rule to ensure Home Assistant detects the update and prompts the user to upgrade their Add-on.
 - **Never compile from scratch**: The `Dockerfile` relies on official `ggml-org/llama.cpp` releases to keep image build times fast and sizes small.
 - **Handling library paths**: Because the release tarballs contain dynamic libraries (`.so` files), `run.sh` explicitly exports `LD_LIBRARY_PATH` so `llama-server` can find its dependencies.
 - **Troubleshooting**: `pull_models.py` outputs all downloaded models to the console at startup so users can see exactly what is cached in their `LLAMACPP_MODEL_DIR` by checking the Add-on Logs.

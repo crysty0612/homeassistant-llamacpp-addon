@@ -57,7 +57,8 @@ If you have downloaded a multimodal model (like LLaVA or Qwen-VL) and its corres
    - **Port:** `8080` (Internal HA network always uses 8080, regardless of Network tab mapping)
 5. You can now use the `llmvision.image_analyzer` service in your automations to analyze local camera feeds using your local model!
 
----
+> [!WARNING]
+> **Vision & Speculative Decoding Conflict:** Currently, `llama.cpp` has an upstream bug where processing images while a Drafter (Speculative Decoding) is enabled will crash the server. If you intend to use Vision, you **MUST** select the "vision" Use Case in the Add-on configuration, which will safely disable any configured drafters.
 
 ## 📊 Ingress Web UI & Dashboard
 

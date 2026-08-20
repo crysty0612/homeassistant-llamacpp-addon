@@ -59,10 +59,18 @@ def main():
     with open(options_path, "r") as f:
         options = json.load(f)
 
+    use_case = options.get("LLAMACPP_USE_CASE", "text").strip().lower()
     model_dir = options.get("LLAMACPP_MODEL_DIR", "/share/llamacpp")
     main_model = options.get("LLAMACPP_MODEL", "").strip()
-    drafter = options.get("LLAMACPP_DRAFTER", "").strip()
-    drafter_type = options.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
+    
+    # Ignore Drafter if Vision use case is selected
+    if use_case == "vision":
+        print("Vision use case selected. Disabling speculative decoding to prevent crashes.")
+        drafter = ""
+        drafter_type = "none"
+    else:
+        drafter = options.get("LLAMACPP_DRAFTER", "").strip()
+        drafter_type = options.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
     
     os.makedirs(model_dir, exist_ok=True)
     

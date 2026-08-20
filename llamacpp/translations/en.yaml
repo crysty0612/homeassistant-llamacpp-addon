@@ -1,4 +1,7 @@
 configuration:
+  LLAMACPP_USE_CASE:
+    name: "Use Case (Text vs Vision)"
+    description: "Select 'vision' if you intend to send images to this server. Warning: 'vision' disables speculative decoding to prevent crashes."
   LLAMACPP_MODEL_DIR:
     name: Model Directory
     description: Directory where the downloaded models are stored. Ensure sufficient space.
