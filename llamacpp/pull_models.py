@@ -79,13 +79,8 @@ def main():
             print(f"Model entry {idx} is missing LLAMACPP_MODEL. Skipping.")
             continue
             
-        if use_case == "vision":
-            print(f"[{main_model}] Vision use case selected. Disabling speculative decoding to prevent crashes.")
-            drafter = ""
-            drafter_type = "none"
-        else:
-            drafter = model_cfg.get("LLAMACPP_DRAFTER", "").strip()
-            drafter_type = model_cfg.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
+        drafter = model_cfg.get("LLAMACPP_DRAFTER", "").strip()
+        drafter_type = model_cfg.get("LLAMACPP_DRAFTER_TYPE", "none").strip()
             
         exec_config = {}
         exec_config["use_case"] = use_case
