@@ -67,31 +67,30 @@ jobs:
             echo "$NEW_TAG" > llamacpp/llama_version.txt
             
             # Bump patch version in config.yaml
-            python3 -c '
-            if True:
-                import yaml
-
-                class quoted_str(str):
-                    pass
-                
-                def quoted_scalar_representer(dumper, data):
-                    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="\"")
-                
-                yaml.add_representer(quoted_str, quoted_scalar_representer)
-
-                with open("llamacpp/config.yaml", "r") as f:
-                    config = yaml.safe_load(f)
-                
-                version_parts = config["version"].split(".")
-                version_parts[2] = str(int(version_parts[2]) + 1)
-                new_version = ".".join(version_parts)
-                config["version"] = quoted_str(new_version)
-
-                with open("llamacpp/config.yaml", "w") as f:
-                    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-                
-                print(new_version)
-            ' > /tmp/new_addon_version.txt
+            python3 -c 'import textwrap; exec(textwrap.dedent("""
+            import yaml
+            
+            class quoted_str(str):
+                pass
+            
+            def quoted_scalar_representer(dumper, data):
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="\"")
+            
+            yaml.add_representer(quoted_str, quoted_scalar_representer)
+            
+            with open("llamacpp/config.yaml", "r") as f:
+                config = yaml.safe_load(f)
+            
+            version_parts = config["version"].split(".")
+            version_parts[2] = str(int(version_parts[2]) + 1)
+            new_version = ".".join(version_parts)
+            config["version"] = quoted_str(new_version)
+            
+            with open("llamacpp/config.yaml", "w") as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+            
+            print(new_version)
+            """))' > /tmp/new_addon_version.txt
             
             # Update README files with the new llama.cpp tag
             sed -i "s|runs on \*\*llama.cpp\*\* \[[^]]*\](https://github.com/ggml-org/llama.cpp/releases/tag/[^)]*)|runs on **llama.cpp** [$NEW_TAG](https://github.com/ggml-org/llama.cpp/releases/tag/$NEW_TAG)|g" README.md
