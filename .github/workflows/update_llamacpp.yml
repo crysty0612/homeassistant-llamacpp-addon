@@ -1,6 +1,9 @@
 name: Update llama.cpp version
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -32,6 +35,8 @@ jobs:
           try:
               with urllib.request.urlopen(req) as response:
                   data = json.loads(response.read().decode())
+                  # Sort releases by published_at descending
+                  data.sort(key=lambda x: x.get("published_at", ""), reverse=True)
                   for release in data:
                       assets = [a["name"] for a in release.get("assets", [])]
                       if any("ubuntu-x64.tar.gz" in a for a in assets):
