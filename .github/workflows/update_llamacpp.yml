@@ -87,6 +87,10 @@ jobs:
             print(new_version)
             ' > /tmp/new_addon_version.txt
             
+            # Update README files with the new llama.cpp tag
+            sed -i "s|runs on \*\*llama.cpp\*\* \[[^]]*\](https://github.com/ggml-org/llama.cpp/releases/tag/[^)]*)|runs on **llama.cpp** [$NEW_TAG](https://github.com/ggml-org/llama.cpp/releases/tag/$NEW_TAG)|g" README.md
+            sed -i "s|runs on \*\*llama.cpp\*\* \[[^]]*\](https://github.com/ggml-org/llama.cpp/releases/tag/[^)]*)|runs on **llama.cpp** [$NEW_TAG](https://github.com/ggml-org/llama.cpp/releases/tag/$NEW_TAG)|g" llamacpp/README.md
+            
             echo "new_addon_version=$(cat /tmp/new_addon_version.txt)" >> $GITHUB_OUTPUT
           else
             echo "Already up to date ($CURRENT_TAG)"
@@ -133,7 +137,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          git add llamacpp/llama_version.txt llamacpp/config.yaml
+          git add llamacpp/llama_version.txt llamacpp/config.yaml README.md llamacpp/README.md
           git commit -m "chore(llamacpp): update to ${{ steps.check-update.outputs.new_tag }}" -m "Bump addon version to ${{ steps.check-update.outputs.new_addon_version }}"
           git push
           

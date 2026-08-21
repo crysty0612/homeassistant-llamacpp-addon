@@ -9,8 +9,10 @@
 </div>
 
 </div>
-Run large language models (LLMs) directly on your Home Assistant server using the highly optimized [llama.cpp](https://github.com/ggml-org/llama.cpp) inference engine. This Add-on wraps `llama-server`, exposing a highly configurable, memory-efficient, OpenAI-compatible API endpoint directly on your local network.
 
+> ⚡ This version runs on **llama.cpp** [b10549](https://github.com/ggml-org/llama.cpp/releases/tag/b10549)
+
+Run large language models (LLMs) directly on your Home Assistant server using the highly optimized [llama.cpp](https://github.com/ggml-org/llama.cpp) inference engine. This Add-on wraps `llama-server`, exposing a highly configurable, memory-efficient, OpenAI-compatible API endpoint directly on your local network.
 ## ✨ Features
 
 - **Hugging Face Auto-Pull:** Simply enter the Hugging Face model repository and filename (e.g., `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`). The Add-on will automatically download and cache it upon startup.
