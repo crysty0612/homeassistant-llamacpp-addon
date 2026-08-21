@@ -67,7 +67,7 @@ jobs:
             echo "$NEW_TAG" > llamacpp/llama_version.txt
             
             # Bump patch version in config.yaml
-          python3 -c '
+            python3 -c '
 import yaml
 
 class quoted_str(str):
@@ -90,7 +90,7 @@ with open("llamacpp/config.yaml", "w") as f:
     yaml.dump(config, f, default_flow_style=False, sort_keys=False)
     
 print(new_version)
-' > /tmp/new_addon_version.txt
+            ' > /tmp/new_addon_version.txt
             
             # Update README files with the new llama.cpp tag
             sed -i "s|runs on \*\*llama.cpp\*\* \[[^]]*\](https://github.com/ggml-org/llama.cpp/releases/tag/[^)]*)|runs on **llama.cpp** [$NEW_TAG](https://github.com/ggml-org/llama.cpp/releases/tag/$NEW_TAG)|g" README.md
