@@ -1,0 +1,67 @@
+name: Create Release and Branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'llamacpp/config.yaml'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install PyYAML
+        run: pip install PyYAML
+
+      - name: Get version from config.yaml
+        id: get-version
+        run: |
+          VERSION=$(python3 -c '
+          import yaml
+          with open("llamacpp/config.yaml", "r") as f:
+              print(yaml.safe_load(f)["version"])
+          ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Tag, Release, and Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get-version.outputs.version }}
+          TAG_NAME="v$VERSION"
+          BRANCH_NAME="version_$VERSION"
+          
+          # Check if tag already exists
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists. Skipping release."
+            exit 0
+          fi
+          
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create and push branch
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          
+          # Create and push tag
+          git checkout main
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+          
+          # Create GitHub Release
+          gh release create "$TAG_NAME" --title "Release $TAG_NAME" --notes "Automated release for version $VERSION."

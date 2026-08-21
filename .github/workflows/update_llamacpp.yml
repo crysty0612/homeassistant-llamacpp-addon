@@ -136,3 +136,19 @@ jobs:
           git add llamacpp/llama_version.txt llamacpp/config.yaml
           git commit -m "chore(llamacpp): update to ${{ steps.check-update.outputs.new_tag }}" -m "Bump addon version to ${{ steps.check-update.outputs.new_addon_version }}"
           git push
+          
+          VERSION="${{ steps.check-update.outputs.new_addon_version }}"
+          TAG_NAME="v$VERSION"
+          BRANCH_NAME="version_$VERSION"
+          
+          # Create and push branch
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          
+          # Create and push tag
+          git checkout main
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+          
+          # Create GitHub Release
+          GH_TOKEN=${{ secrets.GITHUB_TOKEN }} gh release create "$TAG_NAME" --title "Release $TAG_NAME" --notes "Automated release for version $VERSION updating llama.cpp to ${{ steps.check-update.outputs.new_tag }}."
