@@ -21,32 +21,34 @@ if [ ! -f "$EXEC_CONFIG" ]; then
     exit 1
 fi
 
+VERSION=$(cat /opt/llama.cpp/llama_version.txt)
+BIN_DIR="/data/llamacpp-bin/${VERSION}"
+LLAMA_SERVER_CPU="${BIN_DIR}/build-cpu/llama-server"
+LLAMA_SERVER_VULKAN="${BIN_DIR}/build-vulkan/llama-server"
 
-UPDATE_ON_BOOT=$(jq --raw-output 'if has("LLAMACPP_UPDATE_ON_BOOT") then .LLAMACPP_UPDATE_ON_BOOT else "false" end' "$CONFIG_PATH")
-
-if [ "$UPDATE_ON_BOOT" = "true" ]; then
+if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ]; then
     echo "=================================================="
-    echo "Update on Boot enabled! Fetching latest llama.cpp..."
+    echo "Fetching llama.cpp version ${VERSION}..."
     echo "=================================================="
     ARCH=$(dpkg --print-architecture)
     if [ "$ARCH" = "amd64" ]; then LLAMA_ARCH="x64";
     elif [ "$ARCH" = "arm64" ]; then LLAMA_ARCH="arm64";
     else echo "Unsupported architecture: $ARCH"; exit 1; fi
     
-    LATEST_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest)
+    mkdir -p "${BIN_DIR}/build-cpu" "${BIN_DIR}/build-vulkan"
     
-    CPU_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-${LLAMA_ARCH}\.tar\.gz" | head -n 1)
-    echo "Downloading updated CPU release: $CPU_URL"
+    CPU_URL="https://github.com/ggml-org/llama.cpp/releases/download/${VERSION}/llama-${VERSION}-bin-ubuntu-${LLAMA_ARCH}.tar.gz"
+    echo "Downloading CPU release: $CPU_URL"
     curl -sL -o /tmp/cpu.tar.gz "$CPU_URL"
-    tar -xzf /tmp/cpu.tar.gz -C /opt/llama.cpp/build-cpu --strip-components=1
+    tar -xzf /tmp/cpu.tar.gz -C "${BIN_DIR}/build-cpu" --strip-components=1
     
-    VULKAN_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-vulkan-${LLAMA_ARCH}\.tar\.gz" | head -n 1)
-    echo "Downloading updated Vulkan release: $VULKAN_URL"
+    VULKAN_URL="https://github.com/ggml-org/llama.cpp/releases/download/${VERSION}/llama-${VERSION}-bin-ubuntu-vulkan-${LLAMA_ARCH}.tar.gz"
+    echo "Downloading Vulkan release: $VULKAN_URL"
     curl -sL -o /tmp/vulkan.tar.gz "$VULKAN_URL"
-    tar -xzf /tmp/vulkan.tar.gz -C /opt/llama.cpp/build-vulkan --strip-components=1
+    tar -xzf /tmp/vulkan.tar.gz -C "${BIN_DIR}/build-vulkan" --strip-components=1
     
     rm -f /tmp/cpu.tar.gz /tmp/vulkan.tar.gz
-    echo "Update complete!"
+    echo "Download complete!"
 fi
 
 # Read server options from user config
@@ -60,13 +62,13 @@ GPU_PATH=$(jq --raw-output '.LLAMACPP_GPU_PATH // "/dev/dri/renderD128"' "$CONFI
 FLASH_ATTN=$(jq --raw-output 'if has("LLAMACPP_FLASH_ATTN") then .LLAMACPP_FLASH_ATTN else "false" end' "$CONFIG_PATH")
 
 # Determine which binary to use
-SERVER_DIR="/opt/llama.cpp/build-cpu"
+SERVER_DIR="${BIN_DIR}/build-cpu"
 BINARY="$SERVER_DIR/llama-server"
 if [ "$USE_VULKAN" = "true" ]; then
     echo "Vulkan enabled. Verifying GPU..."
     if [ -e "$GPU_PATH" ]; then
         echo "GPU found at $GPU_PATH. Using Vulkan binary."
-        SERVER_DIR="/opt/llama.cpp/build-vulkan"
+        SERVER_DIR="${BIN_DIR}/build-vulkan"
         BINARY="$SERVER_DIR/llama-server"
     else
         echo "WARNING: GPU path $GPU_PATH not found! Falling back to CPU binary."

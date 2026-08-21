@@ -20,7 +20,6 @@ ports:
 ports_description:
   8080/tcp: "The llama.cpp server API Port"
 options:
-  LLAMACPP_UPDATE_ON_BOOT: false
   LLAMACPP_MODEL_DIR: /share/llamacpp
   MODELS:
     - LLAMACPP_USE_CASE: "text"
@@ -38,7 +37,6 @@ options:
   LLAMACPP_HF_TOKEN: ""
   gpus: all
 schema:
-  LLAMACPP_UPDATE_ON_BOOT: bool
   LLAMACPP_MODEL_DIR: list(/config/llamacpp|/share/llamacpp|/data/llamacpp)
   MODELS:
     - LLAMACPP_USE_CASE: list(text|vision)

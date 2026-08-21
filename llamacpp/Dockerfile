@@ -18,30 +18,7 @@ RUN pip3 install --no-cache-dir huggingface_hub --break-system-packages
 
 WORKDIR /opt/llama.cpp
 
-# Download and extract the latest stable releases of llama.cpp from ggml-org
-RUN set -e; \
-    ARCH=$(dpkg --print-architecture); \
-    if [ "$ARCH" = "amd64" ]; then LLAMA_ARCH="x64"; \
-    elif [ "$ARCH" = "arm64" ]; then LLAMA_ARCH="arm64"; \
-    else echo "Unsupported architecture: $ARCH"; exit 1; fi; \
-    \
-    LATEST_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest); \
-    \
-    # Find and download the CPU tarball URL
-    CPU_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-${LLAMA_ARCH}\.tar\.gz" | head -n 1); \
-    echo "Downloading CPU: $CPU_URL"; \
-    curl -L -o cpu.tar.gz "$CPU_URL"; \
-    mkdir -p build-cpu; \
-    tar -xzf cpu.tar.gz -C build-cpu --strip-components=1; \
-    rm cpu.tar.gz; \
-    \
-    # Find and download the Vulkan tarball URL
-    VULKAN_URL=$(echo "$LATEST_RELEASE" | grep -o "https://github.com/ggml-org/llama.cpp/releases/download/[^\"]*ubuntu-vulkan-${LLAMA_ARCH}\.tar\.gz" | head -n 1); \
-    echo "Downloading Vulkan: $VULKAN_URL"; \
-    curl -L -o vulkan.tar.gz "$VULKAN_URL"; \
-    mkdir -p build-vulkan; \
-    tar -xzf vulkan.tar.gz -C build-vulkan --strip-components=1; \
-    rm vulkan.tar.gz
+COPY llama_version.txt /opt/llama.cpp/llama_version.txt
 
 # Add the runtime script, python utility, and public web UI
 COPY pull_models.py /pull_models.py
