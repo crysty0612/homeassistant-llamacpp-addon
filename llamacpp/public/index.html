@@ -169,6 +169,17 @@
                 const globalPropsRes = await fetch(`${basePath}/props`);
                 if (globalPropsRes.ok) {
                     firstProps = await globalPropsRes.json();
+                    
+
+                    // Fetch actual API model name even in standard mode
+                    try {
+                        const modelsRes = await fetch(`${basePath}/v1/models`);
+                        if (modelsRes.ok) {
+                            modelsData = await modelsRes.json();
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch models in standard mode:", e);
+                    }
                 } else if (globalPropsRes.status === 400) {
                     isRouterMode = true;
                 }
@@ -231,7 +242,7 @@
                 }
 
                 // Update UI
-                if (isRouterMode && modelsData && modelsData.data) {
+                if (modelsData && modelsData.data) {
                     const modelNames = modelsData.data.map(m => m.id).join('\n');
                     document.getElementById('model-path').textContent = modelNames || 'Unknown';
                     // Update props if at least one model is loaded and fetched props
@@ -240,7 +251,7 @@
                         document.getElementById('system-info').textContent = firstProps.model_ftype || 'Unknown';
                     }
                 } else if (firstProps) {
-                    // In standard mode, just show the file name as the API model doesn't strictly matter
+                    // Fallback to filename in standard mode if v1/models failed
                     const p = firstProps.model_path || 'Unknown';
                     const filename = p.split('/').pop().replace('.gguf', '');
                     document.getElementById('model-path').textContent = filename;
