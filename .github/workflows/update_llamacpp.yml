@@ -93,17 +93,46 @@ jobs:
             echo "update_needed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create Pull Request
+      - name: Set up Docker Buildx
         if: steps.check-update.outputs.update_needed == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: "chore(llamacpp): update to ${{ steps.check-update.outputs.new_tag }}\n\nBump addon version to ${{ steps.check-update.outputs.new_addon_version }}"
-          title: "Update llama.cpp to ${{ steps.check-update.outputs.new_tag }}"
-          body: |
-            This PR automatically updates `llama.cpp` to the latest stable release `${{ steps.check-update.outputs.new_tag }}`.
-            
-            It also bumps the add-on version to `${{ steps.check-update.outputs.new_addon_version }}`.
-            
-            The automated tests will run against this branch. If they pass, you can safely merge this PR to release the update.
-          branch: "update-llamacpp-${{ steps.check-update.outputs.new_tag }}"
-          base: main
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        if: steps.check-update.outputs.update_needed == 'true'
+        run: |
+          docker build --build-arg BUILD_FROM=ubuntu:24.04 -t llamacpp-addon-test ./llamacpp
+
+      - name: Test Container Boot and Model Pulling
+        if: steps.check-update.outputs.update_needed == 'true'
+        run: |
+          # Start the container with the mocked options
+          docker run -d --name llamacpp-test-instance \
+            -p 8080:8080 \
+            -v ${{ github.workspace }}/test/options.json:/data/options.json \
+            llamacpp-addon-test
+
+          # Wait for the server to start (timeout after 5 minutes)
+          echo "Waiting for server to respond on port 8080..."
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
+          
+          echo "Server started successfully!"
+
+      - name: Show Container Logs on Failure
+        if: failure() && steps.check-update.outputs.update_needed == 'true'
+        run: docker logs llamacpp-test-instance
+
+      - name: Cleanup
+        if: always() && steps.check-update.outputs.update_needed == 'true'
+        run: |
+          docker stop llamacpp-test-instance || true
+          docker rm llamacpp-test-instance || true
+
+      - name: Commit and Push
+        if: steps.check-update.outputs.update_needed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add llamacpp/llama_version.txt llamacpp/config.yaml
+          git commit -m "chore(llamacpp): update to ${{ steps.check-update.outputs.new_tag }}" -m "Bump addon version to ${{ steps.check-update.outputs.new_addon_version }}"
+          git push
