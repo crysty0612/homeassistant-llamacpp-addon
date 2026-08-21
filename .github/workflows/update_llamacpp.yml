@@ -39,22 +39,8 @@ jobs:
           try:
               with urllib.request.urlopen(req) as response:
                   release = json.loads(response.read().decode())
-                  assets = {a["name"]: a["browser_download_url"] for a in release.get("assets", [])}
-                  
-                  if "nightly-tag.txt" in assets:
-                      nightly_url = assets["nightly-tag.txt"]
-                      with urllib.request.urlopen(nightly_url) as n_res:
-                          nightly_tag = n_res.read().decode().strip()
-                          print(nightly_tag)
-                          sys.exit(0)
-                  
-                  elif any("ubuntu-x64.tar.gz" in name for name in assets):
-                      print(release["tag_name"])
-                      sys.exit(0)
-                      
-                  else:
-                      print("No suitable binaries found in latest release", file=sys.stderr)
-                      sys.exit(1)
+                  print(release["tag_name"])
+                  sys.exit(0)
           except Exception as e:
               print(f"Error fetching releases: {e}", file=sys.stderr)
               sys.exit(1)

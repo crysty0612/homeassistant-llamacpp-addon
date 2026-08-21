@@ -37,12 +37,20 @@ if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ]; then
     
     mkdir -p "${BIN_DIR}/build-cpu" "${BIN_DIR}/build-vulkan"
     
-    CPU_URL="https://github.com/ggml-org/llama.cpp/releases/download/${VERSION}/llama-${VERSION}-bin-ubuntu-${LLAMA_ARCH}.tar.gz"
+    # Resolve meta-releases (like v0.2.0) to their actual binary tag (like b10566)
+    BIN_VERSION="$VERSION"
+    NIGHTLY_TXT_URL="https://github.com/ggml-org/llama.cpp/releases/download/${VERSION}/nightly-tag.txt"
+    if curl -sI "$NIGHTLY_TXT_URL" | grep -iq "HTTP/.* 200\|HTTP/.* 302"; then
+        BIN_VERSION=$(curl -sL "$NIGHTLY_TXT_URL" | tr -d '[:space:]')
+        echo "Resolved meta-release ${VERSION} to binary tag ${BIN_VERSION}"
+    fi
+    
+    CPU_URL="https://github.com/ggml-org/llama.cpp/releases/download/${BIN_VERSION}/llama-${BIN_VERSION}-bin-ubuntu-${LLAMA_ARCH}.tar.gz"
     echo "Downloading CPU release: $CPU_URL"
     curl -sL -o /tmp/cpu.tar.gz "$CPU_URL"
     tar -xzf /tmp/cpu.tar.gz -C "${BIN_DIR}/build-cpu" --strip-components=1
     
-    VULKAN_URL="https://github.com/ggml-org/llama.cpp/releases/download/${VERSION}/llama-${VERSION}-bin-ubuntu-vulkan-${LLAMA_ARCH}.tar.gz"
+    VULKAN_URL="https://github.com/ggml-org/llama.cpp/releases/download/${BIN_VERSION}/llama-${BIN_VERSION}-bin-ubuntu-vulkan-${LLAMA_ARCH}.tar.gz"
     echo "Downloading Vulkan release: $VULKAN_URL"
     curl -sL -o /tmp/vulkan.tar.gz "$VULKAN_URL"
     tar -xzf /tmp/vulkan.tar.gz -C "${BIN_DIR}/build-vulkan" --strip-components=1
