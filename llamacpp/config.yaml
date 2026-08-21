@@ -54,9 +54,6 @@ schema:
   LLAMACPP_FLASH_ATTN: bool
   LLAMACPP_HF_TOKEN: match(^(hf_.+)?$)
   gpus: str
-devices:
-- /dev/dri/renderD128
-- /dev/dri/card0
-- /dev/dri
+video: true
 startup: application
 watchdog: tcp://[HOST]:[PORT:8080]
