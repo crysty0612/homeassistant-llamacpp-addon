@@ -1,7 +1,7 @@
 name: llama.cpp (Vulkan & CPU)
 description: Run large language models locally using llama.cpp with advanced features
   like Drafter and Vulkan GPU support.
-version: "1.2.0"
+version: "1.2.1"
 slug: llamacpp
 arch:
 - aarch64

@@ -98,6 +98,21 @@
     </style>
 </head>
 <body>
+    <div id="download-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; padding: 40px; box-sizing: border-box;">
+        <div style="max-width: 600px; margin: 100px auto; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.5);">
+            <h2 style="margin-top: 0; color: var(--primary);">Downloading Models...</h2>
+            <div style="color: var(--text-muted); margin-bottom: 20px;" id="dl-status">Starting up...</div>
+            <div style="font-weight: 600; margin-bottom: 10px;" id="dl-model"></div>
+            <div style="background: var(--bg); border-radius: 8px; height: 24px; width: 100%; overflow: hidden; margin-bottom: 15px;">
+                <div id="dl-progress-bar" style="background: var(--primary); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: var(--text-muted);">
+                <div id="dl-percent">0%</div>
+                <div id="dl-speed"></div>
+                <div id="dl-eta"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="header">
         <h1>llama.cpp Server Dashboard</h1>
@@ -149,6 +164,27 @@
             document.getElementById('dashboard-banner').src = `${basePath}/logo.png`;
             
             try {
+                // Check if pulling models first
+                try {
+                    const pullRes = await fetch(`${basePath}/pull_status`);
+                    if (pullRes.ok) {
+                        const pullState = await pullRes.json();
+                        if (!pullState.done) {
+                            document.getElementById('download-overlay').style.display = 'block';
+                            document.getElementById('dl-status').textContent = pullState.status || '';
+                            document.getElementById('dl-model').textContent = pullState.model_name || '';
+                            document.getElementById('dl-progress-bar').style.width = pullState.progress_percent || '0%';
+                            document.getElementById('dl-percent').textContent = pullState.progress_percent || '0%';
+                            document.getElementById('dl-speed').textContent = pullState.speed || '';
+                            document.getElementById('dl-eta').textContent = pullState.eta ? 'ETA: ' + pullState.eta : '';
+                            return; // Stop processing dashboard if downloading
+                        }
+                    }
+                } catch (e) {
+                    // Ignore, likely llama-server is running and /pull_status returned 404
+                }
+                document.getElementById('download-overlay').style.display = 'none';
+
                 // Fetch Health
                 const healthRes = await fetch(`${basePath}/health`);
                 const health = await healthRes.json();
@@ -243,7 +279,13 @@
 
                 // Update UI
                 if (modelsData && modelsData.data) {
-                    const modelNames = modelsData.data.map(m => m.id).join('\n');
+                    const modelNames = modelsData.data.map(m => {
+                        let id = m.id;
+                        if (id.includes('/')) {
+                            id = id.split('/').pop().replace('.gguf', '');
+                        }
+                        return id;
+                    }).join('\n');
                     document.getElementById('model-path').textContent = modelNames || 'Unknown';
                     // Update props if at least one model is loaded and fetched props
                     if (firstProps) {
