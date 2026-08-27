@@ -35,6 +35,7 @@ options:
   LLAMACPP_BATCH_SIZE: 512
   LLAMACPP_PARALLEL: 1
   LLAMACPP_FLASH_ATTN: true
+  LLAMACPP_KV_CACHE_TYPE: f16
   LLAMACPP_HF_TOKEN: ''
   gpus: all
 schema:
@@ -52,6 +53,7 @@ schema:
   LLAMACPP_BATCH_SIZE: int
   LLAMACPP_PARALLEL: int
   LLAMACPP_FLASH_ATTN: bool
+  LLAMACPP_KV_CACHE_TYPE: list(f16|f32|q8_0|q4_0|q4_1)
   LLAMACPP_HF_TOKEN: match(^(hf_.+)?$)
   gpus: str
 video: true

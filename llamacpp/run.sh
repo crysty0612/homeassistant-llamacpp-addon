@@ -68,6 +68,7 @@ PARALLEL=$(jq --raw-output '.LLAMACPP_PARALLEL // 1' "$CONFIG_PATH")
 USE_VULKAN=$(jq --raw-output 'if has("LLAMACPP_VULKAN") then .LLAMACPP_VULKAN else "true" end' "$CONFIG_PATH")
 GPU_PATH=$(jq --raw-output '.LLAMACPP_GPU_PATH // "/dev/dri/renderD128"' "$CONFIG_PATH")
 FLASH_ATTN=$(jq --raw-output 'if has("LLAMACPP_FLASH_ATTN") then .LLAMACPP_FLASH_ATTN else "false" end' "$CONFIG_PATH")
+KV_CACHE_TYPE=$(jq --raw-output 'if has("LLAMACPP_KV_CACHE_TYPE") then .LLAMACPP_KV_CACHE_TYPE else "f16" end' "$CONFIG_PATH")
 
 # Determine which binary to use
 SERVER_DIR="${BIN_DIR}/build-cpu"
@@ -96,7 +97,7 @@ if [ "$NUM_MODELS" -eq 0 ]; then
     exit 1
 fi
 
-CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics")
+CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics" "-ctk" "$KV_CACHE_TYPE" "-ctv" "$KV_CACHE_TYPE")
 
 if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")
