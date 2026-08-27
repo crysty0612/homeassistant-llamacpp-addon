@@ -109,10 +109,10 @@ DRAFT_MAX=$(jq --raw-output ".[0].draft_max // empty" "$EXEC_CONFIG")
 EXTRA_ARGS=$(jq --raw-output ".[0].extra_args // empty" "$EXEC_CONFIG")
 
 if [ -n "$DRAFT_MIN" ] && [ "$DRAFT_MIN" != "null" ]; then
-    CMD+=("--draft-min" "$DRAFT_MIN")
+    CMD+=("--spec-draft-n-min" "$DRAFT_MIN")
 fi
 if [ -n "$DRAFT_MAX" ] && [ "$DRAFT_MAX" != "null" ]; then
-    CMD+=("--draft-max" "$DRAFT_MAX")
+    CMD+=("--spec-draft-n-max" "$DRAFT_MAX")
 fi
 if [ -n "$EXTRA_ARGS" ] && [ "$EXTRA_ARGS" != "null" ]; then
     # Properly split by spaces so arguments are handled correctly
