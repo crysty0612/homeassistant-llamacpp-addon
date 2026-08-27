@@ -103,6 +103,23 @@ if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")
 fi
 
+# Extract and apply speculative decoding limits and extra args from the first model config
+DRAFT_MIN=$(jq --raw-output ".[0].draft_min // empty" "$EXEC_CONFIG")
+DRAFT_MAX=$(jq --raw-output ".[0].draft_max // empty" "$EXEC_CONFIG")
+EXTRA_ARGS=$(jq --raw-output ".[0].extra_args // empty" "$EXEC_CONFIG")
+
+if [ -n "$DRAFT_MIN" ] && [ "$DRAFT_MIN" != "null" ]; then
+    CMD+=("--draft-min" "$DRAFT_MIN")
+fi
+if [ -n "$DRAFT_MAX" ] && [ "$DRAFT_MAX" != "null" ]; then
+    CMD+=("--draft-max" "$DRAFT_MAX")
+fi
+if [ -n "$EXTRA_ARGS" ] && [ "$EXTRA_ARGS" != "null" ]; then
+    # Properly split by spaces so arguments are handled correctly
+    read -ra EXTRA_ARGS_ARRAY <<< "$EXTRA_ARGS"
+    CMD+=("${EXTRA_ARGS_ARRAY[@]}")
+fi
+
 if [ "$NUM_MODELS" -eq 1 ]; then
     echo "Single model detected. Bypassing Router Mode for backwards compatibility."
     MODEL=$(jq --raw-output ".[0].model // empty" "$EXEC_CONFIG")

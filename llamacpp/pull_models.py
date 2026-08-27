@@ -116,6 +116,17 @@ def main():
         if drafter_type.lower() != "none":
             exec_config["drafter_type"] = drafter_type
             
+        draft_min = model_cfg.get("LLAMACPP_DRAFT_MIN")
+        draft_max = model_cfg.get("LLAMACPP_DRAFT_MAX")
+        extra_args = model_cfg.get("LLAMACPP_EXTRA_ARGS", "").strip()
+        
+        if draft_min is not None:
+            exec_config["draft_min"] = draft_min
+        if draft_max is not None:
+            exec_config["draft_max"] = draft_max
+        if extra_args:
+            exec_config["extra_args"] = extra_args
+            
         exec_configs.append(exec_config)
             
     # Save the execution config
