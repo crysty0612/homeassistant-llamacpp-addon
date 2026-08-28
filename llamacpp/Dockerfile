@@ -24,7 +24,7 @@ RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes
     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list && \
     apt-get update && apt-get install -y \
     intel-opencl-icd intel-level-zero-gpu level-zero \
-    intel-oneapi-compiler-dpcpp-cpp-runtime intel-oneapi-runtime-dnnl intel-oneapi-runtime-mkl \
+    intel-oneapi-compiler-dpcpp-cpp-runtime-2025.3 intel-oneapi-runtime-dnnl=2025.3.0-409 intel-oneapi-runtime-mkl=2025.3.0-461 \
     && rm -rf /var/lib/apt/lists/* \
     && echo "Configuring dynamic linker for Intel oneAPI libraries..." \
     && find /opt/intel -name "*.so*" -exec dirname {} \; | sort -u > /etc/ld.so.conf.d/intel.conf \
