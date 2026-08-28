@@ -16,8 +16,10 @@ Run large language models (LLMs) directly on your Home Assistant server using th
 ## ✨ Features
 
 - **Hugging Face Auto-Pull:** Simply enter the Hugging Face model repository and filename (e.g., `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`). The Add-on will automatically download and cache it upon startup.
-- **Vulkan GPU Acceleration:** Natively supports passing through host GPUs via Vulkan (`/dev/dri/renderD128`) for dramatically faster token generation on supported hardware.
-- **Speculative Decoding (MTP / DFLASH):** Automatically handles advanced decoding strategies. Just configure a secondary drafter model and select your decoding strategy in the UI to squeeze the maximum tokens-per-second out of your hardware.
+- **Universal GPU Acceleration:** Natively supports passing through host GPUs for dramatically faster token generation:
+  - **Vulkan:** Best suited for AMD and NVIDIA dedicated GPUs (e.g., Radeon, GeForce).
+  - **SYCL (Intel oneAPI):** Best suited for Intel hardware, specifically Intel Core iGPUs (e.g., UHD Graphics, Iris Xe) and Intel Arc dedicated GPUs. Dramatically outperforms Vulkan on Intel hardware.
+- **Speculative Decoding (Drafter):** Automatically handles advanced decoding strategies. Just configure a secondary tiny drafter model and select your decoding strategy (like `dflash` or `dspark`) in the UI to squeeze the maximum tokens-per-second out of your hardware.
 - **Multi-Modal Vision Support:** Automatically scans Hugging Face repositories for `*mmproj*.gguf` files. If a vision projection file is detected, it is automatically passed to the server, unlocking image analysis capabilities!
 - **OpenAI-Compatible API:** The server inherently provides an OpenAI-compatible `/v1/chat/completions` endpoint for seamless integration into other software.
 
@@ -47,9 +49,11 @@ Navigate to the Add-on's **Configuration** tab. You will be presented with a hig
 
 ### Recommended Advanced Settings
 * **Context Size:** The maximum context window of the model (default `4096`). Increasing this will increase RAM usage.
-* **Vulkan Hardware Acceleration:** Toggle this on if your HA server has a compatible GPU.
-* **GPU Device Path:** Default is `/dev/dri/renderD128`. Only applicable if Vulkan is enabled.
-* **Speculative Decoding:** To enable, specify a smaller `Drafter Model` and pick the `Drafter Type` (MTP or DFLASH).
+* **Hardware Acceleration:** Toggle either **Vulkan** (for AMD/NVIDIA) or **SYCL** (for Intel) depending on your server's hardware.
+* **GPU Device Path:** Default is `/dev/dri/renderD128`. Applicable if acceleration is enabled.
+* **Speculative Decoding:** To enable, specify a smaller `Drafter Model` of the *same architectural family* as your main model. 
+  - `dflash`: Recommended for general use when VRAM is plentiful. Fast and aggressive token generation.
+  - `dspark`: Excellent tokens-per-second when combining large models with tiny drafters (e.g., LFM-DSpark models).
 
 ### First Boot
 On the first boot, the Add-on will reach out to Hugging Face and download the specified models. **This will take time** depending on your internet connection. 
