@@ -1,5 +1,5 @@
 ARG BUILD_FROM
-FROM ${BUILD_FROM}
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 

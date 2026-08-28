@@ -14,7 +14,7 @@ Before starting the add-on, you must configure it to download a model.
    * **Example 1:** `unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL` (This will automatically find the matching GGUF).
    * **Example 2:** `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`
 3. Optional: Enter a **Hugging Face Token** (`hf_...`) to download gated/private models.
-4. Optional: Hardware Acceleration: Enable either **Vulkan** (best for AMD/NVIDIA GPUs) or **SYCL** (best for Intel iGPUs like Iris Xe) to significantly boost performance.
+4. Optional: Hardware Acceleration: Enable either **Vulkan** (best for AMD/NVIDIA GPUs) or **SYCL (!experimental)** (best for Intel GPU/iGPU ) to significantly boost performance.
 5. Optional: **Speculative Decoding (Drafter)**: Select a tiny model of the same architectural family as the main model (e.g. 0.5B model drafting for a 7B model) to increase generation speed.
 6. Save and Start the add-on. 
 
