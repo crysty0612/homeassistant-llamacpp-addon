@@ -1,0 +1,21 @@
+{
+    "repositoryUrl": "git@github.com:crysty0612/homeassistant-llamacpp-addon.git",
+    "tagFormat": "v${version}",
+    "branches": ["main"],
+    "plugins": [
+        "@semantic-release/commit-analyzer",
+        "@semantic-release/release-notes-generator",
+        ["@semantic-release/changelog", {
+            "changelogFile": "llamacpp/CHANGELOG.md",
+            "changelogTitle": "# Changelog"
+        }],
+        ["@semantic-release/exec", {
+            "prepareCmd": "sed -i 's/^version: .*/version: \"${nextRelease.version}\"/' llamacpp/config.yaml"
+        }],
+        ["@semantic-release/git", {
+            "assets": ["llamacpp/CHANGELOG.md", "llamacpp/config.yaml"],
+            "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+        }],
+        "@semantic-release/github"
+    ]
+}

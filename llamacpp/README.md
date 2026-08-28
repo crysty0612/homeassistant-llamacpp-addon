@@ -14,10 +14,29 @@ Before starting the add-on, you must configure it to download a model.
    * **Example 1:** `unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL` (This will automatically find the matching GGUF).
    * **Example 2:** `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`
 3. Optional: Enter a **Hugging Face Token** (`hf_...`) to download gated/private models.
-4. Optional: If your Home Assistant runs on an x86 machine with an integrated or dedicated GPU, enable **Vulkan** for massive performance boosts.
-5. Save and Start the add-on. 
+4. Optional: Hardware Acceleration: Enable either **Vulkan** (best for AMD/NVIDIA GPUs) or **SYCL (!experimental)** (best for Intel GPU/iGPU ) to significantly boost performance.
+5. Optional: **Speculative Decoding (Drafter)**: Select a tiny model of the same architectural family as the main model (e.g. 0.5B model drafting for a 7B model) to increase generation speed.
+6. Save and Start the add-on. 
 
 The add-on will automatically download your models on the first boot. Check the **Log** tab to track the progress!
+
+---
+
+## 🏎️ Speculative Decoding (Drafter) Guide
+
+Speculative decoding allows a tiny "drafter" model to guess tokens extremely fast, while the larger "main" model verifies them in parallel. This can double or triple your Tokens Per Second (TPS).
+
+### Best Practices
+- **Same Architecture:** The drafter model must belong to the exact same architectural family (e.g., Llama 3) as the main model.
+- **Vocabulary:** Both models must share the exact same vocabulary size.
+- **VRAM Constraint:** Drafter models take up extra memory. Ensure you have enough RAM/VRAM for both models combined.
+
+### Configuration Example
+- **Main Model:** `Qwen/Qwen2.5-7B-Instruct-GGUF:qwen2.5-7b-instruct-q4_k_m.gguf`
+- **Drafter Model:** `Qwen/Qwen2.5-0.5B-Instruct-GGUF:qwen2.5-0.5b-instruct-q4_k_m.gguf`
+- **Drafter Type:** 
+  - `dflash`: Use when you have plenty of memory bandwidth.
+  - `dspark`: Excellent choice for combining large models with tiny drafters.
 
 ---
 

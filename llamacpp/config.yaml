@@ -1,7 +1,6 @@
-name: llama.cpp (Vulkan & CPU)
-description: Run large language models locally using llama.cpp with advanced features
-  like Drafter and Vulkan GPU support.
-version: "1.2.2"
+name: llama.cpp (CPU, GPU, iGPU)
+description: Run large language models locally using llama.cpp. Features full hardware acceleration via Vulkan (AMD/Nvidia GPUs) and SYCL (Intel iGPUs), plus advanced Speculative Decoding.
+version: "1.4.0"
 slug: llamacpp
 arch:
 - aarch64
@@ -14,12 +13,14 @@ map:
 init: false
 ingress: true
 legacy: true
-ingress_port: 8080
+ingress_port: 8081
 ingress_stream: true
 ports:
   8080/tcp: 8080
+  8081/tcp: null
 ports_description:
   8080/tcp: The llama.cpp server API Port
+  8081/tcp: The Management Web UI Port
 options:
   LLAMACPP_MODEL_DIR: /share/llamacpp
   MODELS:
@@ -32,6 +33,7 @@ options:
     LLAMACPP_DRAFT_MAX: 16
     LLAMACPP_EXTRA_ARGS: ''
   LLAMACPP_VULKAN: true
+  LLAMACPP_SYCL: false
   LLAMACPP_GPU_PATH: /dev/dri/renderD128
   LLAMACPP_CTX_SIZE: 4096
   LLAMACPP_THREADS: 4
@@ -53,6 +55,7 @@ schema:
     LLAMACPP_DRAFT_MAX: int?
     LLAMACPP_EXTRA_ARGS: str?
   LLAMACPP_VULKAN: bool
+  LLAMACPP_SYCL: bool
   LLAMACPP_GPU_PATH: str
   LLAMACPP_CTX_SIZE: int
   LLAMACPP_THREADS: int

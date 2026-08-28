@@ -23,26 +23,56 @@ jobs:
         run: |
           docker build --build-arg BUILD_FROM=ubuntu:24.04 -t llamacpp-addon-test ./llamacpp
 
-      - name: Test Container Boot and Model Pulling
+      - name: Test Container Boot - CPU Mode
         run: |
-          # Start the container with the mocked options
-          docker run -d --name llamacpp-test-instance \
-            -p 8080:8080 \
-            -v ${{ github.workspace }}/test/options.json:/data/options.json \
-            llamacpp-addon-test
+          # Configure for CPU mode
+          jq '.LLAMACPP_VULKAN = false | .LLAMACPP_SYCL = false' ${{ github.workspace }}/test/options.json > /tmp/options-cpu.json
+          docker run -d --name llamacpp-test-cpu -p 8080:8080 -v /tmp/options-cpu.json:/data/options.json llamacpp-addon-test
+          echo "Waiting for server to respond on port 8080 (CPU)..."
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-cpu; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
+          echo "CPU Server started successfully!"
+          docker logs llamacpp-test-cpu
+          docker stop llamacpp-test-cpu
+          docker rm llamacpp-test-cpu
 
-          # Wait for the server to start (timeout after 5 minutes)
-          echo "Waiting for server to respond on port 8080..."
-          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
-          
-          echo "Server started successfully!"
+      - name: Test Container Boot - Vulkan Mode
+        run: |
+          # Configure for Vulkan mode
+          jq '.LLAMACPP_VULKAN = true | .LLAMACPP_SYCL = false' ${{ github.workspace }}/test/options.json > /tmp/options-vulkan.json
+          docker run -d --name llamacpp-test-vulkan -p 8080:8080 -v /tmp/options-vulkan.json:/data/options.json llamacpp-addon-test
+          echo "Waiting for server to respond on port 8080 (Vulkan)..."
+          # Depending on CI runner hardware, Vulkan might fallback to CPU, but it should still boot.
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-vulkan; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
+          echo "Vulkan Server started successfully!"
+          docker logs llamacpp-test-vulkan
+          docker stop llamacpp-test-vulkan
+          docker rm llamacpp-test-vulkan
+
+      - name: Test Container Boot - SYCL Mode
+        run: |
+          # Configure for SYCL mode
+          jq '.LLAMACPP_SYCL = true | .LLAMACPP_VULKAN = false' ${{ github.workspace }}/test/options.json > /tmp/options-sycl.json
+          docker run -d --name llamacpp-test-sycl -p 8080:8080 -v /tmp/options-sycl.json:/data/options.json llamacpp-addon-test
+          echo "Waiting for server to respond on port 8080 (SYCL)..."
+          # Ensure missing library errors cause failure instead of hanging
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-sycl; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
+          echo "SYCL Server started successfully!"
+          docker logs llamacpp-test-sycl
+          docker stop llamacpp-test-sycl
+          docker rm llamacpp-test-sycl
 
       - name: Show Container Logs on Failure
         if: failure()
-        run: docker logs llamacpp-test-instance
+        run: |
+          echo "=== CPU Logs ==="
+          docker logs llamacpp-test-cpu || true
+          echo "=== Vulkan Logs ==="
+          docker logs llamacpp-test-vulkan || true
+          echo "=== SYCL Logs ==="
+          docker logs llamacpp-test-sycl || true
 
       - name: Cleanup
         if: always()
         run: |
-          docker stop llamacpp-test-instance || true
-          docker rm llamacpp-test-instance || true
+          docker stop llamacpp-test-cpu llamacpp-test-vulkan llamacpp-test-sycl || true
+          docker rm llamacpp-test-cpu llamacpp-test-vulkan llamacpp-test-sycl || true
