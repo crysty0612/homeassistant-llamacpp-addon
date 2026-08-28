@@ -25,8 +25,9 @@ VERSION=$(cat /opt/llama.cpp/llama_version.txt)
 BIN_DIR="/data/llamacpp-bin/${VERSION}"
 LLAMA_SERVER_CPU="${BIN_DIR}/build-cpu/llama-server"
 LLAMA_SERVER_VULKAN="${BIN_DIR}/build-vulkan/llama-server"
+LLAMA_SERVER_SYCL="${BIN_DIR}/build-sycl/llama-server"
 
-if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ]; then
+if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ] || [ ! -f "$LLAMA_SERVER_SYCL" ]; then
     echo "=================================================="
     echo "Fetching llama.cpp version ${VERSION}..."
     echo "=================================================="
