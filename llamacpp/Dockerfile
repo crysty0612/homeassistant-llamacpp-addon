@@ -11,6 +11,18 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     vulkan-tools \
     libvulkan1 \
+    wget \
+    gpg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Intel graphics drivers (Level Zero) and oneAPI SYCL runtime
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | tee /etc/apt/sources.list.d/intel-gpu-noble.list && \
+    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --yes --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list && \
+    apt-get update && apt-get install -y \
+    intel-opencl-icd intel-level-zero-gpu level-zero \
+    intel-oneapi-runtime-dpcpp-sycl-rt \
     && rm -rf /var/lib/apt/lists/*
 
 # Install huggingface_hub for python-based model pulling

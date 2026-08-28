@@ -1,7 +1,7 @@
 name: llama.cpp (Vulkan & CPU)
 description: Run large language models locally using llama.cpp with advanced features
   like Drafter and Vulkan GPU support.
-version: "1.2.2"
+version: "1.3.0"
 slug: llamacpp
 arch:
 - aarch64
@@ -32,6 +32,7 @@ options:
     LLAMACPP_DRAFT_MAX: 16
     LLAMACPP_EXTRA_ARGS: ''
   LLAMACPP_VULKAN: true
+  LLAMACPP_SYCL: false
   LLAMACPP_GPU_PATH: /dev/dri/renderD128
   LLAMACPP_CTX_SIZE: 4096
   LLAMACPP_THREADS: 4
@@ -53,6 +54,7 @@ schema:
     LLAMACPP_DRAFT_MAX: int?
     LLAMACPP_EXTRA_ARGS: str?
   LLAMACPP_VULKAN: bool
+  LLAMACPP_SYCL: bool
   LLAMACPP_GPU_PATH: str
   LLAMACPP_CTX_SIZE: int
   LLAMACPP_THREADS: int

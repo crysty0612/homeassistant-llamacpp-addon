@@ -55,7 +55,13 @@ if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ]; then
     curl -sL -o /tmp/vulkan.tar.gz "$VULKAN_URL"
     tar -xzf /tmp/vulkan.tar.gz -C "${BIN_DIR}/build-vulkan" --strip-components=1
     
-    rm -f /tmp/cpu.tar.gz /tmp/vulkan.tar.gz
+    SYCL_URL="https://github.com/ggml-org/llama.cpp/releases/download/${BIN_VERSION}/llama-${BIN_VERSION}-bin-ubuntu-sycl-fp16-${LLAMA_ARCH}.tar.gz"
+    echo "Downloading SYCL release: $SYCL_URL"
+    mkdir -p "${BIN_DIR}/build-sycl"
+    curl -sL -o /tmp/sycl.tar.gz "$SYCL_URL"
+    tar -xzf /tmp/sycl.tar.gz -C "${BIN_DIR}/build-sycl" --strip-components=1 || echo "Warning: SYCL binary failed to extract."
+    
+    rm -f /tmp/cpu.tar.gz /tmp/vulkan.tar.gz /tmp/sycl.tar.gz
     echo "Download complete!"
 fi
 
@@ -65,6 +71,7 @@ CTX_SIZE=$(jq --raw-output '.LLAMACPP_CTX_SIZE // 4096' "$CONFIG_PATH")
 THREADS=$(jq --raw-output '.LLAMACPP_THREADS // 4' "$CONFIG_PATH")
 BATCH_SIZE=$(jq --raw-output '.LLAMACPP_BATCH_SIZE // 512' "$CONFIG_PATH")
 PARALLEL=$(jq --raw-output '.LLAMACPP_PARALLEL // 1' "$CONFIG_PATH")
+USE_SYCL=$(jq --raw-output 'if has("LLAMACPP_SYCL") then .LLAMACPP_SYCL else "false" end' "$CONFIG_PATH")
 USE_VULKAN=$(jq --raw-output 'if has("LLAMACPP_VULKAN") then .LLAMACPP_VULKAN else "true" end' "$CONFIG_PATH")
 GPU_PATH=$(jq --raw-output '.LLAMACPP_GPU_PATH // "/dev/dri/renderD128"' "$CONFIG_PATH")
 FLASH_ATTN=$(jq --raw-output 'if has("LLAMACPP_FLASH_ATTN") then .LLAMACPP_FLASH_ATTN else "false" end' "$CONFIG_PATH")
@@ -73,7 +80,15 @@ KV_CACHE_TYPE=$(jq --raw-output 'if has("LLAMACPP_KV_CACHE_TYPE") then .LLAMACPP
 # Determine which binary to use
 SERVER_DIR="${BIN_DIR}/build-cpu"
 BINARY="$SERVER_DIR/llama-server"
-if [ "$USE_VULKAN" = "true" ]; then
+
+if [ "$USE_SYCL" = "true" ]; then
+    echo "Intel SYCL enabled! Using highly optimized oneAPI backend."
+    SERVER_DIR="${BIN_DIR}/build-sycl"
+    BINARY="$SERVER_DIR/llama-server"
+    if [ -f "/opt/intel/oneapi/setvars.sh" ]; then
+        source /opt/intel/oneapi/setvars.sh
+    fi
+elif [ "$USE_VULKAN" = "true" ]; then
     echo "Vulkan enabled. Verifying GPU..."
     if [ -e "$GPU_PATH" ]; then
         echo "GPU found at $GPU_PATH. Using Vulkan binary."
@@ -83,7 +98,7 @@ if [ "$USE_VULKAN" = "true" ]; then
         echo "WARNING: GPU path $GPU_PATH not found! Falling back to CPU binary."
     fi
 else
-    echo "Vulkan disabled by configuration. Using CPU binary."
+    echo "Vulkan & SYCL disabled by configuration. Using CPU binary."
 fi
 
 # Set library path so the server can find its .so files (libggml, libllama, etc)
