@@ -22,7 +22,7 @@ RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes
     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list && \
     apt-get update && apt-get install -y \
     intel-opencl-icd intel-level-zero-gpu level-zero \
-    intel-oneapi-runtime-dpcpp-sycl-rt \
+    intel-oneapi-runtime-dpcpp-sycl-rt intel-oneapi-runtime-compilers \
     && rm -rf /var/lib/apt/lists/*
 
 # Install huggingface_hub for python-based model pulling
