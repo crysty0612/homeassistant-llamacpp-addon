@@ -1,4 +1,5 @@
 {
+    "repositoryUrl": "git@github.com:crysty0612/homeassistant-llamacpp-addon.git",
     "tagFormat": "v${version}",
     "branches": ["main"],
     "plugins": [
