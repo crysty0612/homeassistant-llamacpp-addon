@@ -29,12 +29,14 @@ jobs:
           persist-credentials: false
           ssh-key: ${{ secrets.DEPLOY_KEY || '' }}
       - name: Force Git to use SSH for push
-        if: ${{ secrets.DEPLOY_KEY != '' }}
-        run: |
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
-          git config --global url."git@github.com:".insteadOf "https://x-access-token:${GITHUB_TOKEN}@github.com/"
         env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$DEPLOY_KEY" ]; then
+            git config --global url."git@github.com:".insteadOf "https://github.com/"
+            git config --global url."git@github.com:".insteadOf "https://x-access-token:${GITHUB_TOKEN}@github.com/"
+          fi
 
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v6.0.0
