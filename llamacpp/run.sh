@@ -89,6 +89,12 @@ if [ "$USE_SYCL" = "true" ]; then
         echo "GPU found at $GPU_PATH. Using highly optimized oneAPI backend."
         SERVER_DIR="${BIN_DIR}/build-sycl"
         BINARY="$SERVER_DIR/llama-server"
+        
+        echo "Configuring SYCL iGPU memory limits..."
+        export ZES_ENABLE_SYSMAN=1
+        export GGML_SYCL_ENABLE_VMM=0
+        export UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1
+        
         if [ -f "/opt/intel/oneapi/setvars.sh" ]; then
             source /opt/intel/oneapi/setvars.sh
         fi
