@@ -1,5 +1,5 @@
 ARG BUILD_FROM
-FROM ubuntu:24.04
+FROM ${BUILD_FROM}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -45,4 +45,4 @@ COPY public /opt/llama.cpp/public
 COPY logo.png /opt/llama.cpp/public/logo.png
 RUN chmod +x /run.sh
 
-ENTRYPOINT [ "/run.sh" ]
+CMD [ "/run.sh" ]
