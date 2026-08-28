@@ -29,7 +29,7 @@ jobs:
           jq '.LLAMACPP_VULKAN = false | .LLAMACPP_SYCL = false' ${{ github.workspace }}/test/options.json > /tmp/options-cpu.json
           docker run -d --name llamacpp-test-cpu -p 8080:8080 -v /tmp/options-cpu.json:/data/options.json llamacpp-addon-test
           echo "Waiting for server to respond on port 8080 (CPU)..."
-          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-cpu; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
           echo "CPU Server started successfully!"
           docker logs llamacpp-test-cpu
           docker stop llamacpp-test-cpu
@@ -42,7 +42,7 @@ jobs:
           docker run -d --name llamacpp-test-vulkan -p 8080:8080 -v /tmp/options-vulkan.json:/data/options.json llamacpp-addon-test
           echo "Waiting for server to respond on port 8080 (Vulkan)..."
           # Depending on CI runner hardware, Vulkan might fallback to CPU, but it should still boot.
-          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-vulkan; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
           echo "Vulkan Server started successfully!"
           docker logs llamacpp-test-vulkan
           docker stop llamacpp-test-vulkan
@@ -55,7 +55,7 @@ jobs:
           docker run -d --name llamacpp-test-sycl -p 8080:8080 -v /tmp/options-sycl.json:/data/options.json llamacpp-addon-test
           echo "Waiting for server to respond on port 8080 (SYCL)..."
           # Ensure missing library errors cause failure instead of hanging
-          timeout 300 bash -c 'until curl -s http://localhost:8080/health > /dev/null; do sleep 5; done'
+          timeout 300 bash -c 'until curl -s http://localhost:8080/health | grep -q "ok"; do if ! docker ps | grep -q llamacpp-test-sycl; then echo "Container crashed!"; exit 1; fi; sleep 5; done'
           echo "SYCL Server started successfully!"
           docker logs llamacpp-test-sycl
           docker stop llamacpp-test-sycl
