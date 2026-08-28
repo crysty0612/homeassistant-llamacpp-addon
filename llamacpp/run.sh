@@ -67,7 +67,8 @@ if [ ! -f "$LLAMA_SERVER_CPU" ] || [ ! -f "$LLAMA_SERVER_VULKAN" ] || [ ! -f "$L
 fi
 
 # Read server options from user config
-PORT=$(jq --raw-output '.ingress_port // 8080' "$CONFIG_PATH")
+LLAMA_PORT="8080"
+UI_PORT=$(jq --raw-output '.ingress_port // 8081' "$CONFIG_PATH")
 CTX_SIZE=$(jq --raw-output '.LLAMACPP_CTX_SIZE // 4096' "$CONFIG_PATH")
 THREADS=$(jq --raw-output '.LLAMACPP_THREADS // 4' "$CONFIG_PATH")
 BATCH_SIZE=$(jq --raw-output '.LLAMACPP_BATCH_SIZE // 512' "$CONFIG_PATH")
@@ -120,7 +121,7 @@ if [ "$NUM_MODELS" -eq 0 ]; then
     exit 1
 fi
 
-CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--path" "/opt/llama.cpp/public" "--metrics" "-ctk" "$KV_CACHE_TYPE" "-ctv" "$KV_CACHE_TYPE")
+CMD=("$BINARY" "--host" "0.0.0.0" "--port" "$LLAMA_PORT" "-c" "$CTX_SIZE" "-t" "$THREADS" "-b" "$BATCH_SIZE" "--parallel" "$PARALLEL" "--metrics" "-ctk" "$KV_CACHE_TYPE" "-ctv" "$KV_CACHE_TYPE")
 
 if [ "$FLASH_ATTN" = "true" ]; then
     CMD+=("--flash-attn" "on")
@@ -220,6 +221,9 @@ else
     echo "Generated presets.ini:"
     cat "$PRESET_FILE"
 fi
+
+echo "Starting UI Management Server on port $UI_PORT..."
+PORT="$UI_PORT" python3 /ui_server.py &
 
 echo "Starting server with command: ${CMD[*]}"
 exec "${CMD[@]}"

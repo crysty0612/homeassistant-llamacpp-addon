@@ -145,6 +145,13 @@
                 <div class="metric-value" style="font-size: 14px;">See add-on logs for Drafter, Vulkan, and Batch Size status.</div>
             </div>
         </div>
+        
+        <div class="card">
+            <h2>Model Manager</h2>
+            <div id="models-list">
+                <p style="color: var(--text-muted); font-size: 14px;">Loading local models...</p>
+            </div>
+        </div>
     </div>
 
     <div class="card slots-container">
@@ -332,9 +339,92 @@
             `;
         }
 
-        // Poll every 2 seconds
+        // Poll every 2 seconds for metrics
         setInterval(fetchMetrics, 2000);
         fetchMetrics();
+        
+        // Model Manager Logic
+        async function fetchLocalModels() {
+            const basePath = window.location.pathname.replace(/\/$/, '');
+            const modelsList = document.getElementById('models-list');
+            
+            try {
+                const res = await fetch(`${basePath}/api/models`);
+                if (!res.ok) throw new Error("Failed to fetch");
+                const models = await res.json();
+                
+                if (models.length === 0) {
+                    modelsList.innerHTML = `<p style="color: var(--text-muted); font-size: 14px;">No models downloaded yet.</p>`;
+                    return;
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+                for (const m of models) {
+                    const sizeMB = (m.size_bytes / (1024 * 1024)).toFixed(2);
+                    let drafterHtml = '';
+                    let drafterNameArg = 'null';
+                    
+                    if (m.drafter) {
+                        const dSizeMB = (m.drafter.size_bytes / (1024 * 1024)).toFixed(2);
+                        drafterHtml = `<div style="font-size: 12px; color: var(--primary); margin-top: 2px;">↳ Paired Drafter: ${m.drafter.filename} (${dSizeMB} MB)</div>`;
+                        drafterNameArg = `'${m.drafter.filename}'`;
+                    }
+                    
+                    html += `
+                        <div style="background: var(--bg-color); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="overflow: hidden;">
+                                <div style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.filename}">Main: ${m.filename}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${sizeMB} MB</div>
+                                ${drafterHtml}
+                            </div>
+                            <button onclick="deleteModel('${m.filename}', ${drafterNameArg})" style="background: var(--danger); color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 12px; margin-left: 10px;">Delete</button>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                modelsList.innerHTML = html;
+            } catch (err) {
+                console.error("Failed to load models:", err);
+                modelsList.innerHTML = `<p style="color: var(--danger); font-size: 14px;">Failed to load models.</p>`;
+            }
+        }
+        
+        async function deleteModel(filename, drafterName) {
+            let deleteDrafter = false;
+            
+            if (drafterName) {
+                if (confirm(`This model has a paired drafter (${drafterName}). Do you want to delete BOTH the main model and the drafter? (Click OK to delete both, or Cancel to delete ONLY the main model)`)) {
+                    deleteDrafter = true;
+                } else if (!confirm(`Are you sure you want to delete ONLY the main model (${filename})?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`Are you sure you want to completely delete ${filename} from disk? You will need to redownload it to use it again.`)) {
+                    return;
+                }
+            }
+            
+            const basePath = window.location.pathname.replace(/\/$/, '');
+            let url = `${basePath}/api/models/${encodeURIComponent(filename)}`;
+            if (deleteDrafter && drafterName) {
+                url += `?delete_drafter=true&drafter_name=${encodeURIComponent(drafterName)}`;
+            }
+            
+            try {
+                const res = await fetch(url, { method: 'DELETE' });
+                if (res.ok) {
+                    alert(`${filename}${deleteDrafter ? ' and paired drafter' : ''} deleted successfully.`);
+                    fetchLocalModels();
+                } else {
+                    const err = await res.text();
+                    alert(`Failed to delete: ${err}`);
+                }
+            } catch (err) {
+                alert(`Error deleting model: ${err}`);
+            }
+        }
+        
+        fetchLocalModels();
     </script>
 </body>
 </html>
