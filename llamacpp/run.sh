@@ -89,6 +89,13 @@ if [ "$USE_SYCL" = "true" ]; then
     if [ -f "/opt/intel/oneapi/setvars.sh" ]; then
         source /opt/intel/oneapi/setvars.sh
     fi
+    
+    # setvars.sh may not be present in minimal runtime installs, so we manually
+    # find and append all Intel library directories to ensure libsvml.so is found
+    if [ -d "/opt/intel" ]; then
+        INTEL_LIBS=$(find /opt/intel -name "*.so" -exec dirname {} \; | sort -u | tr '\n' ':')
+        export LD_LIBRARY_PATH="$INTEL_LIBS$LD_LIBRARY_PATH"
+    fi
 elif [ "$USE_VULKAN" = "true" ]; then
     echo "Vulkan enabled. Verifying GPU..."
     if [ -e "$GPU_PATH" ]; then
