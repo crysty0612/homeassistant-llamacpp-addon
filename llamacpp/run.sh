@@ -84,11 +84,16 @@ SERVER_DIR="${BIN_DIR}/build-cpu"
 BINARY="$SERVER_DIR/llama-server"
 
 if [ "$USE_SYCL" = "true" ]; then
-    echo "Intel SYCL enabled! Using highly optimized oneAPI backend."
-    SERVER_DIR="${BIN_DIR}/build-sycl"
-    BINARY="$SERVER_DIR/llama-server"
-    if [ -f "/opt/intel/oneapi/setvars.sh" ]; then
-        source /opt/intel/oneapi/setvars.sh
+    echo "Intel SYCL enabled. Verifying GPU..."
+    if [ -e "$GPU_PATH" ]; then
+        echo "GPU found at $GPU_PATH. Using highly optimized oneAPI backend."
+        SERVER_DIR="${BIN_DIR}/build-sycl"
+        BINARY="$SERVER_DIR/llama-server"
+        if [ -f "/opt/intel/oneapi/setvars.sh" ]; then
+            source /opt/intel/oneapi/setvars.sh
+        fi
+    else
+        echo "WARNING: GPU path $GPU_PATH not found! Falling back to CPU binary."
     fi
 elif [ "$USE_VULKAN" = "true" ]; then
     echo "Vulkan enabled. Verifying GPU..."
