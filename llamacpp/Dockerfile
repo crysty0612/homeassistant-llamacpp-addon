@@ -22,11 +22,11 @@ RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes
     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list && \
     apt-get update && apt-get install -y \
     intel-opencl-icd intel-level-zero-gpu level-zero \
-    intel-oneapi-runtime-dpcpp-cpp-2024 intel-oneapi-runtime-dnnl-2024 intel-oneapi-runtime-mkl-2024 \
+    intel-oneapi-runtime-dpcpp-cpp-2025 intel-oneapi-runtime-dnnl-2025 intel-oneapi-runtime-mkl-2025 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install huggingface_hub for python-based model pulling
-RUN pip3 install --no-cache-dir huggingface_hub --break-system-packages
+RUN pip3 install --no-cache-dir huggingface_hub flask requests --break-system-packages
 
 WORKDIR /opt/llama.cpp
 
@@ -34,6 +34,7 @@ COPY llama_version.txt /opt/llama.cpp/llama_version.txt
 
 # Add the runtime script, python utility, and public web UI
 COPY pull_models.py /pull_models.py
+COPY ui_server.py /ui_server.py
 COPY run.sh /run.sh
 COPY public /opt/llama.cpp/public
 COPY logo.png /opt/llama.cpp/public/logo.png
