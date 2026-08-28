@@ -25,7 +25,10 @@ RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes
     apt-get update && apt-get install -y \
     intel-opencl-icd intel-level-zero-gpu level-zero \
     intel-oneapi-compiler-dpcpp-cpp-runtime intel-oneapi-runtime-dnnl intel-oneapi-runtime-mkl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Configuring dynamic linker for Intel oneAPI libraries..." \
+    && find /opt/intel -name "*.so*" -exec dirname {} \; | sort -u > /etc/ld.so.conf.d/intel.conf \
+    && ldconfig
 
 # Install huggingface_hub for python-based model pulling
 RUN pip3 install --no-cache-dir huggingface_hub flask requests --break-system-packages
