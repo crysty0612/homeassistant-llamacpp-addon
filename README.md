@@ -10,7 +10,7 @@
 
 </div>
 
-> ⚡ This version runs on **llama.cpp** [v0.3.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.3.0)
+> ⚡ This version runs on **llama.cpp** [v0.4.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.4.0)
 
 Run large language models (LLMs) directly on your Home Assistant server using the highly optimized [llama.cpp](https://github.com/ggml-org/llama.cpp) inference engine. This Add-on wraps `llama-server`, exposing a highly configurable, memory-efficient, OpenAI-compatible API endpoint directly on your local network.
 ## ✨ Features

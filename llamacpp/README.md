@@ -1,6 +1,6 @@
 # Home Assistant llama.cpp Add-on Documentation
 
-> ⚡ This version runs on **llama.cpp** [v0.3.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.3.0)
+> ⚡ This version runs on **llama.cpp** [v0.4.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.4.0)
 
 Welcome to the `llama.cpp` Add-on for Home Assistant! This add-on provides a fully functional, GPU-accelerated OpenAI-compatible API running directly on your Home Assistant machine, allowing you to use Local LLMs privately and securely.
 

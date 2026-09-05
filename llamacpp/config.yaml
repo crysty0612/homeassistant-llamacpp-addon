@@ -1,6 +1,8 @@
 name: llama.cpp (CPU, GPU, iGPU)
-description: Run large language models locally using llama.cpp. Features full hardware acceleration via Vulkan (AMD/Nvidia GPUs) and SYCL (Intel iGPUs), plus advanced Speculative Decoding.
-version: "1.4.1"
+description: Run large language models locally using llama.cpp. Features full hardware
+  acceleration via Vulkan (AMD/Nvidia GPUs) and SYCL (Intel iGPUs), plus advanced
+  Speculative Decoding.
+version: "1.4.2"
 slug: llamacpp
 arch:
 - aarch64
